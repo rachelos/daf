@@ -16,7 +16,7 @@
 
 # Quick Start
 ```
-docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/daf:latest
+docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/go-daf:latest
 ```
 
 # Quick Upgrade
