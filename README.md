@@ -79,7 +79,49 @@ AK管理
 <img alt="image" src="https://github.com/user-attachments/assets/f61d19bb-ac5e-4fc6-8cb2-ca4ad1b66ae8" />
 <img width="608" height="883" alt="image" src="https://github.com/user-attachments/assets/a7d8126c-a7a1-41a6-a131-7c7afa456be8" />
 
-## 项目架构图
+
+## 项目架构
+
+本项目采用清晰的分层架构设计，遵循Clean Architecture的原则，各层次职责分明，依赖关系清晰。
+
+### 核心模块
+
+- **检测引擎** (Detector)
+  - 实现敏感词检测算法
+  - 支持多种匹配策略
+  
+- **过滤器** (Filter)
+  - 处理文本过滤和替换
+  - 提供多样化的过滤策略
+  
+- **词典管理** (Dictionary)
+  - 管理敏感词词库
+  - 支持动态更新和扩展
+  
+- **算法实现** (Algorithm)
+  - 封装核心算法实现
+  - 包括Trie树和AC自动机等
+
+### 并发设计
+
+- **并发安全的词库管理**
+  - 使用 `sync.Map` 实现线程安全的词典存储
+  - 原子操作保证计数器和时间戳的一致性
+  
+- **高效的批量处理**
+  - 批量加载支持，减少锁竞争
+  - 智能的通知机制，避免频繁更新
+  
+- **上下文控制**
+  - 支持 `context` 取消和超时控制
+  - 优雅的并发任务管理
+  
+- **性能优化**
+  - 通知节流机制，避免过度通知
+  - 批量操作优化，提高并发效率
+  - 无锁设计，减少竞争开销
+
+### 项目架构图
 
 ```mermaid
 graph TD
