@@ -2,31 +2,32 @@
 
 基于 Vite + Vue 3 + TypeScript + Arco Design 的前端项目。
 ## 界面预览
-### 登录
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/a8894c9d-9ce6-49e4-a158-33313024dcee" />
-### 数据统计
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/a5982489-803c-4dd1-881c-e165fc7ddd6a" />
-### 文本检测
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/212dcc0d-d2bf-4c77-9b6e-7c2649864c3d" />
-### 文本过滤
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/de45dc05-624b-4bea-82fa-4529ae94af9c" />
-### 词库管理
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/24ab68e8-cb3c-4835-a46a-78ad1e12e88e" />
-### 词库列表
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/65bd9c98-0368-4eaa-901f-a857ad71cd1b" />
-### 分类信息
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/311fdbaa-eb73-4be6-8e60-97188dc75b4e" />
-### 系统配置
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/742be816-19f5-4c9d-abd9-22e48839cd2d" />
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/ffb421bf-02fe-40e2-a327-14f6c8e59753" />
-### 检测日志
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/e147b8c6-00d6-4c85-9f49-a71fb27aab47" />
-### 日志分析
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/625c5a88-f9e6-482b-9238-bfd741e12d25" />
-### 用户管理
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/64d9372f-2aef-4a0b-b53f-f8d1fe3a910e" />
-### AK管理
-<img width="1920" height="913" alt="image" src="https://github.com/user-attachments/assets/f61d19bb-ac5e-4fc6-8cb2-ca4ad1b66ae8" />
+登录
+<img alt="image" src="https://github.com/user-attachments/assets/a8894c9d-9ce6-49e4-a158-33313024dcee" />
+数据统计
+
+<img alt="image" src="https://github.com/user-attachments/assets/a5982489-803c-4dd1-881c-e165fc7ddd6a" />
+文本检测
+<img alt="image" src="https://github.com/user-attachments/assets/212dcc0d-d2bf-4c77-9b6e-7c2649864c3d" />
+文本过滤
+<img alt="image" src="https://github.com/user-attachments/assets/de45dc05-624b-4bea-82fa-4529ae94af9c" />
+词库管理
+<img alt="image" src="https://github.com/user-attachments/assets/24ab68e8-cb3c-4835-a46a-78ad1e12e88e" />
+词库列表
+<img alt="image" src="https://github.com/user-attachments/assets/65bd9c98-0368-4eaa-901f-a857ad71cd1b" />
+分类信息
+<img alt="image" src="https://github.com/user-attachments/assets/311fdbaa-eb73-4be6-8e60-97188dc75b4e" />
+系统配置
+<img alt="image" src="https://github.com/user-attachments/assets/742be816-19f5-4c9d-abd9-22e48839cd2d" />
+<img alt="image" src="https://github.com/user-attachments/assets/ffb421bf-02fe-40e2-a327-14f6c8e59753" />
+检测日志
+<img alt="image" src="https://github.com/user-attachments/assets/e147b8c6-00d6-4c85-9f49-a71fb27aab47" />
+日志分析
+<img alt="image" src="https://github.com/user-attachments/assets/625c5a88-f9e6-482b-9238-bfd741e12d25" />
+用户管理
+<img alt="image" src="https://github.com/user-attachments/assets/64d9372f-2aef-4a0b-b53f-f8d1fe3a910e" />
+AK管理
+<img alt="image" src="https://github.com/user-attachments/assets/f61d19bb-ac5e-4fc6-8cb2-ca4ad1b66ae8" />
 <img width="608" height="883" alt="image" src="https://github.com/user-attachments/assets/a7d8126c-a7a1-41a6-a131-7c7afa456be8" />
 
 
