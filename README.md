@@ -1,11 +1,10 @@
-# 敏感词检测管理系统 - Web UI
+# 敏感词检测管理系统 
 
 基于 Vite + Vue 3 + TypeScript + Arco Design 的前端项目。
 ## 界面预览
 登录
 <img alt="image" src="https://github.com/user-attachments/assets/a8894c9d-9ce6-49e4-a158-33313024dcee" />
 数据统计
-
 <img alt="image" src="https://github.com/user-attachments/assets/a5982489-803c-4dd1-881c-e165fc7ddd6a" />
 文本检测
 <img alt="image" src="https://github.com/user-attachments/assets/212dcc0d-d2bf-4c77-9b6e-7c2649864c3d" />
