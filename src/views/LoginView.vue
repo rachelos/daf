@@ -72,7 +72,7 @@
     <div class="login-footer">
       <div class="copyright">Sensitive Words Detection</div>
       <div class="footer-links">
-        <a-link href="https://github.com/rachelos/go-daf" target="_blank">GitHub</a-link>
+        <a-link href="https://github.com/rachelos/daf" target="_blank">GitHub</a-link>
         <span class="divider">|</span>
         <a-link href="/api/docs" target="_blank">Docs</a-link>
       </div>
