@@ -1,0 +1,173 @@
+# 敏感词检测系统配置文件
+
+# ==================== 字典配置 ====================
+dictionary:
+    # 是否加载默认敏感词库
+    load_default_words: false
+    # 外部敏感词目录路径
+    external_word_dir: ./data/sensitive-stop-words
+    # 纠错词目录路径
+    correction_word_dir: ./data/correction-stop-words
+# ==================== 检测配置 ====================
+detection:
+    # 是否忽略大小写
+    ignore_case: true
+    # 是否忽略全角/半角字符差异
+    ignore_width: true
+    # 是否忽略数字样式差异（如：①、一、1）
+    ignore_num_style: true
+    # 是否启用数字检测
+    enable_num_check: true
+    # 是否启用URL检测
+    enable_url_check: true
+    # 是否启用邮箱检测
+    enable_email_check: true
+    # 是否跳过空白字符
+    skip_whitespace: true
+    # 最大编辑距离（用于模糊匹配）
+    max_distance: 3
+    # 是否启用拼音匹配
+    enable_pinyin: true
+    # 是否启用同音字匹配
+    enable_homophone: true
+    # 是否启用形近字匹配
+    enable_similar_shape: true
+    # 是否启用异体字匹配
+    enable_variant_form: true
+    # 是否启用中拼音混合匹配
+    enable_zh_py_mix: true
+    # 是否启用通配符匹配
+    enable_wildcard: true
+# ==================== 纠错配置 ====================
+correction:
+    # 是否跳过敏感词检测（仅纠错）
+    skip_sensitive_check: false
+    # 允许的敏感词分类（空表示所有）
+    allowed_categories: ""
+    # 解析后的允许分类（内部使用）
+    allowedcategoriesparsed: []
+# ==================== AI检测配置 ====================
+ai:
+    # 是否启用AI检测
+    enabled: false
+    # AI提供商（openai/azure/等）
+    provider: openai
+    # API密钥
+    api_key: sk-wOxeP6XdTslzCBTD3bA5Dd72Ff73444287E5717421AaD761
+    # API密钥（备用）
+    api_secret: ""
+    # 使用的模型名称
+    model: deepseek-chat
+    # API端点地址
+    endpoint: https://aiapi.changsha.cn/v1/chat/completions
+    # 最大令牌数限制
+    max_tokens: 1000
+    # 温度参数（控制随机性，0-1）
+    temperature: 0.3
+    # 请求超时时间（秒）
+    timeout: 30
+    # AI检测置信度阈值
+    threshold: 0.7
+# ==================== 级联检测配置 ====================
+cascade:
+    # 是否启用级联检测
+    enabled: true
+    # 级联服务端点地址
+    endpoint: http://daf.exp.changsha.cn
+    # 访问密钥
+    access_key: NIkXXxlFaR2xVURKMgOt
+    # 密钥
+    secret_key: your-secret-key-change-this-in-production
+    # 请求超时时间（秒）
+    timeout: 10
+    # 模式：fallback（降级）/primary（主）/parallel（并行）
+    mode: fallback
+    # 是否启用本地缓存
+    local_cache: false
+# ==================== 服务器配置 ====================
+server:
+    # 系统标题
+    title: AI敏感词检测系统
+    # 服务端口
+    port: 8088
+    # JWT密钥（生产环境请修改）
+    jwt_secret: your-secret-key-change-this-in-production
+    # 用户数据库配置
+    user_db:
+        # 数据库类型（sqlite/mysql/postgresql/sqlserver）
+        type: sqlite
+        # SQLite配置
+        sqlite:
+            path: ./data/users.db
+        # MySQL配置（type=mysql时使用）
+        # mysql:
+        #   host: "localhost"
+        #   port: 3306
+        #   database: "sensitive_words"
+        #   username: "root"
+        #   password: "your_password"
+        #   charset: "utf8mb4"
+
+        # PostgreSQL配置（type=postgres时使用）
+        # postgres:
+        #   host: "localhost"
+        #   port: 5432
+        #   database: "sensitive_words"
+        #   username: "postgres"
+        #   password: "your_password"
+        #   sslmode: "disable"
+
+        # SQL Server配置（type=sqlserver时使用）
+        # sqlserver:
+        #   host: "localhost"
+        #   port: 1433
+        #   database: "sensitive_words"
+        #   username: "sa"
+        #   password: "your_password"
+        # 最大打开连接数
+        max_open_conns: 25
+        # 最大空闲连接数
+        max_idle_conns: 10
+        # 连接最大生命周期（秒）
+        max_lifetime: 300
+        # 日志级别
+        log_level: info
+        # 是否记录慢SQL
+        log_slow_sql: true
+    # 词库数据库路径（空则使用默认）
+    word_db_path: ""
+    # 是否显示默认密码
+    show_default_password: false
+# ==================== 日志配置 ====================
+logger:
+    # 日志级别（DEBUG/INFO/WARN/ERROR）
+    log_level: INFO
+    # 日志文件目录
+    log_dir: ./data/logs
+    # 是否启用文件日志
+    enable_file: true
+    # 是否启用控制台日志输出
+    enable_stdout: true
+# ==================== 敏感词分类配置 ====================
+categories:
+    # 是否使用预定义分类
+    use_predefined: true
+    # 自定义分类映射（英文分类名: 中文分类名）
+    custom_categories:
+        Advertisement: 广告
+        Custom: 自定义
+        Disabled: 禁用词
+        Discrimination: 歧视
+        Drugs: 毒品
+        Gambling: 赌博
+        IllegalUrl: 非法网址
+        Leader: 领导人
+        None: 其它
+        NotLeader: 落马领导人
+        OrderLeader: 领导人排序
+        Political: 涉政
+        Pornography: 涉黄
+        Profanity: 脏话
+        Scam: 诈骗
+        StandardUsage: 规范用语
+        Violence: 暴力
