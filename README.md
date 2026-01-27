@@ -34,9 +34,23 @@ docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  rachelos/go-daf:lat
 ```
 # Proxy Mirror for Faster Access (Faster access in China)
 ```
-docker run -d  --name we-mp-rss  -p 8088:8088 -v ./data:/app/data  docker.1ms.run/rachelos/go-daf:latest  
+docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  docker.1ms.run/rachelos/go-daf:latest  
 ```
 
+## Compose Example
+```yaml
+version: '3.8'
+services:
+  daf:
+    image: rachelos/go-daf:latest
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+      - ./data:/app/data
+    environment:
+      - SERVER_PORT=8088
+```
 ## 界面预览
 登录
 <img alt="image" src="https://github.com/user-attachments/assets/a8894c9d-9ce6-49e4-a158-33313024dcee" />
