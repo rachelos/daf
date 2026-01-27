@@ -3,12 +3,12 @@
     <a-spin :loading="loading" tip="加载配置中..." class="w-full">
       <a-card title="系统配置信息" :bordered="false">
         <template #extra>
-          <a-space>
+          <a-space style="position: fixed; right: 36px; top: 86px;z-index:999;">
             <a-button v-if="!editMode" @click="startEdit" type="primary">
               <template #icon>
                 <icon-edit />
               </template>
-              编辑配置
+              编辑
             </a-button>
             <template v-else>
               <a-button @click="cancelEdit">
@@ -17,17 +17,17 @@
                 </template>
                 取消
               </a-button>
-              <a-button @click="saveConfig" type="primary" :loading="saving">
+              <!-- <a-button @click="saveConfig" type="primary" :loading="saving">
                 <template #icon>
                   <icon-save />
                 </template>
                 保存配置
-              </a-button>
+              </a-button> -->
               <a-button @click="saveAndReload" type="primary" :loading="reloading">
                 <template #icon>
                   <icon-refresh />
                 </template>
-                保存并重新加载配置
+                保存
               </a-button>
             </template>
             <a-button v-if="!editMode" @click="restartServer" status="warning" :loading="reloading">

@@ -13,6 +13,30 @@
           <span>{{ statusText }}</span>
         </div>
 
+        <div class="feature-status">
+          <div :class="['feature-tag', 'ai-status', config.ai?.enabled ? 'enabled' : 'disabled']" @click="toggleAI">
+            <template v-if="config.ai?.enabled">
+              <icon-robot />
+              <span>AI已启用</span>
+            </template>
+            <template v-else>
+              <icon-robot />
+              <span>AI未启用</span>
+            </template>
+          </div>
+
+          <div :class="['feature-tag', 'cascade-status', config.cascade?.enabled ? 'enabled' : 'disabled']" @click="toggleCascade">
+            <template v-if="config.cascade?.enabled">
+              <icon-link />
+              <span>级联已启用</span>
+            </template>
+            <template v-else>
+              <icon-link />
+              <span>级联未启用</span>
+            </template>
+          </div>
+        </div>
+
         <a-button shape="circle" size="small" @click="checkHealth">
           <template #icon>
             <icon-refresh />
@@ -199,6 +223,7 @@ const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
 });
+const config = ref<any>({});
 
 // 根据当前路径更新选中的菜单
 const updateSelectedKey = () => {
@@ -286,9 +311,87 @@ const fetchSystemTitle = async () => {
   }
 };
 
+const fetchConfig = async () => {
+  try {
+    const result = await configApi.get();
+    if (result.success && result.data) {
+      config.value = result.data;
+    }
+  } catch (error) {
+    console.error('获取配置失败:', error);
+  }
+};
+
+const toggleAI = async () => {
+  if (!config.value.ai) {
+    Message.warning('配置未加载，请稍候');
+    return;
+  }
+  
+  const newValue = !config.value.ai.enabled;
+  try {
+    // 创建更新的配置副本
+    const updateData = JSON.parse(JSON.stringify(config.value));
+    updateData.ai.enabled = newValue;
+    
+    // 更新配置
+    const updateResult = await configApi.update(updateData);
+    if (!updateResult.success) {
+      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+      return;
+    }
+    
+    // 重新加载配置
+    const reloadResult = await configApi.reloadConfig();
+    if (reloadResult.success) {
+      Message.success(newValue ? 'AI检测已启用' : 'AI检测已关闭');
+      // 重新获取配置以更新显示
+      await fetchConfig();
+    } else {
+      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+    }
+  } catch (error: any) {
+    Message.error('切换AI检测失败: ' + (error.message || '未知错误'));
+  }
+};
+
+const toggleCascade = async () => {
+  if (!config.value.cascade) {
+    Message.warning('配置未加载，请稍候');
+    return;
+  }
+  
+  const newValue = !config.value.cascade.enabled;
+  try {
+    // 创建更新的配置副本
+    const updateData = JSON.parse(JSON.stringify(config.value));
+    updateData.cascade.enabled = newValue;
+    
+    // 更新配置
+    const updateResult = await configApi.update(updateData);
+    if (!updateResult.success) {
+      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+      return;
+    }
+    
+    // 重新加载配置
+    const reloadResult = await configApi.reloadConfig();
+    if (reloadResult.success) {
+      Message.success(newValue ? '级联功能已启用' : '级联功能已关闭');
+      // 重新获取配置以更新显示
+      await fetchConfig();
+    } else {
+      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+    }
+  } catch (error: any) {
+    Message.error('切换级联功能失败: ' + (error.message || '未知错误'));
+  }
+};
+
 onMounted(() => {
   checkHealth();
   fetchSystemTitle();
+  fetchConfig();
 });
 </script>
 
@@ -412,6 +515,56 @@ onMounted(() => {
   &.offline {
     background-color: #F53F3F;
     animation: none;
+  }
+}
+
+.feature-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 16px;
+}
+
+.feature-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+
+  &.ai-status,
+  &.cascade-status {
+    svg {
+      font-size: 14px;
+    }
+  }
+
+  &.enabled {
+    background-color: rgba(0, 180, 42, 0.1);
+    color: #00B42A;
+    border: 1px solid rgba(0, 180, 42, 0.2);
+
+    &:hover {
+      background-color: rgba(0, 180, 42, 0.2);
+      border-color: rgba(0, 180, 42, 0.3);
+    }
+  }
+
+  &.disabled {
+    background-color: rgba(134, 144, 156, 0.1);
+    color: rgba(134, 144, 156, 0.8);
+    border: 1px solid rgba(134, 144, 156, 0.2);
+
+    &:hover {
+      background-color: rgba(134, 144, 156, 0.2);
+      border-color: rgba(134, 144, 156, 0.3);
+      color: rgba(134, 144, 156, 1);
+    }
   }
 }
 

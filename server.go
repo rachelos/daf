@@ -181,6 +181,27 @@ func NewAPIServer(configPath string) (*APIServer, error) {
 	configHandler := apiConfig.NewHandler(detector, cfg)
 	configHandler.SetConfigPath(configPath)
 
+	// 设置检测处理器和AI客户端工厂的引用
+	configHandler.SetDetectHandler(detectHandler)
+	configHandler.SetAIClientFactory(func(cfg *config.Config) interface{} {
+		if !cfg.AI.Enabled {
+			return nil
+		}
+		aiCfg := &ai.Config{
+			Enabled:     cfg.AI.Enabled,
+			Provider:    cfg.AI.Provider,
+			APIKey:      cfg.AI.APIKey,
+			APISecret:   cfg.AI.APISecret,
+			Model:       cfg.AI.Model,
+			Endpoint:    cfg.AI.Endpoint,
+			MaxTokens:   cfg.AI.MaxTokens,
+			Temperature: cfg.AI.Temperature,
+			Timeout:     cfg.AI.Timeout,
+			Threshold:   cfg.AI.Threshold,
+		}
+		return ai.NewAIClient(aiCfg)
+	})
+
 	server := &APIServer{
 		router:            mux.NewRouter(),
 		jwtManager:        jwtManager,

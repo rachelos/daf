@@ -25,7 +25,7 @@ docker stop daf
 docker rm daf
 docker pull ghcr.io/rachelos/daf:latest
 # If you added other parameters, please modify accordingly
-docker run -d  --name we-mp-rss  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/go-daf:latest
+docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/go-daf:latest
 ```
 
 # Official Image
