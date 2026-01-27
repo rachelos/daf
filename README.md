@@ -79,7 +79,43 @@ AK管理
 <img alt="image" src="https://github.com/user-attachments/assets/f61d19bb-ac5e-4fc6-8cb2-ca4ad1b66ae8" />
 <img width="608" height="883" alt="image" src="https://github.com/user-attachments/assets/a7d8126c-a7a1-41a6-a131-7c7afa456be8" />
 
+## 项目架构图
 
+```mermaid
+graph TD
+    subgraph API层
+        DAF[daf - API封装]
+    end
+    
+    subgraph 业务逻辑层
+        DET[detector - 检测引擎]
+        FIL[filter - 过滤器]
+        DIC[dictionary - 词典管理]
+    end
+    
+    subgraph 算法层
+        ALG[algorithm - 算法实现]
+    end
+    
+    subgraph 核心层
+        CORE[core - 接口定义]
+        TYPES[types - 类型定义]
+    end
+    
+    %% 依赖关系
+    DAF --> DET
+    DAF --> FIL
+    DAF --> DIC
+    
+    DET --> ALG
+    DET --> CORE
+    FIL --> CORE
+    DIC --> CORE
+    
+    ALG --> CORE
+    ALG --> TYPES
+    CORE --> TYPES
+```
 
 
 ## 技术栈
