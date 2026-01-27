@@ -139,3 +139,10 @@ export const accessKeysApi = {
 export const healthApi = {
   check: () => api.get('/health'),
 };
+
+export const logsApi = {
+  getStats: (startTime: string, endTime: string, groupBy?: string) =>
+    api.get<{ total_requests: number; sensitive_requests: number; category_stats: Record<string, number> }>('/logs/stats', {
+      params: { start_time: startTime, end_time: endTime, group_by: groupBy }
+    }),
+};

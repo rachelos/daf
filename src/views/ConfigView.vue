@@ -235,6 +235,48 @@
           </a-form>
         </a-card>
 
+        <!-- 分类配置 -->
+        <a-card title="分类配置" class="mb-4" :bordered="false">
+          <a-descriptions v-if="!editMode" bordered>
+            <a-descriptions-item label="使用预定义分类">
+              <a-tag :color="config.categories_config?.use_predefined !== false ? 'green' : 'red'">
+                {{ config.categories_config?.use_predefined !== false ? '是' : '否' }}
+              </a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="自定义分类">
+              <a-space wrap>
+                <a-tag v-for="(name, key) in config.categories_config?.custom_categories" :key="key" color="arcoblue">
+                  {{ key }}: {{ name }}
+                </a-tag>
+              </a-space>
+            </a-descriptions-item>
+          </a-descriptions>
+          <a-form v-else :model="editConfig" layout="vertical">
+            <a-row :gutter="16">
+              <a-col :span="24">
+                <a-form-item label="使用预定义分类">
+                  <a-switch v-model="editConfig.categories_config.use_predefined" />
+                  <template #extra>
+                    启用时将使用预定义分类，自定义分类作为扩展；禁用时将完全使用自定义分类
+                  </template>
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
+                <a-form-item label="自定义分类">
+                  <template #extra>
+                    每行输入格式：分类键名=分类显示名称（例如：custom=自定义分类）
+                  </template>
+                  <a-textarea
+                    v-model="categoriesText"
+                    :auto-size="{ minRows: 8, maxRows: 16 }"
+                    placeholder="pornography=色情&#10;political=政治&#10;violence=暴力"
+                  />
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-form>
+        </a-card>
+
         <!-- 纠错配置 -->
         <a-card title="纠错配置" class="mb-4" :bordered="false">
           <a-descriptions v-if="!editMode" :column="1" bordered>
@@ -537,6 +579,10 @@ interface ConfigData {
   cascade?: any;
   server?: any;
   categories?: Array<{ key: string; name: string; value: string }>;
+  categories_config?: {
+    use_predefined: boolean;
+    custom_categories: Record<string, string>;
+  };
   word_count?: number;
   category_stats?: Record<string, number>;
 }
@@ -547,6 +593,7 @@ const loading = ref(false);
 const editMode = ref(false);
 const saving = ref(false);
 const reloading = ref(false);
+const categoriesText = ref('');
 
 // 分类列配置（预留）
 // const categoryColumns = [
@@ -574,6 +621,33 @@ const loadConfig = async () => {
 const startEdit = () => {
   // 深拷贝配置到编辑对象
   editConfig.value = JSON.parse(JSON.stringify(config.value));
+  
+  // 初始化categories_config
+  if (!editConfig.value.categories_config) {
+    editConfig.value.categories_config = {
+      use_predefined: true,
+      custom_categories: {}
+    };
+  }
+  
+  // 将categories_config转换为文本格式
+  if (config.value.categories_config?.custom_categories) {
+    categoriesText.value = Object.entries(config.value.categories_config.custom_categories)
+      .map(([key, name]) => `${key}=${name}`)
+      .join('\n');
+  } else if (config.value.categories && Array.isArray(config.value.categories)) {
+    // 备用：从categories数组转换
+    const customCategories: Record<string, string> = {};
+    config.value.categories.forEach(cat => {
+      customCategories[cat.key] = cat.name;
+    });
+    editConfig.value.categories_config.custom_categories = customCategories;
+    
+    categoriesText.value = config.value.categories
+      .map(cat => `${cat.key}=${cat.name}`)
+      .join('\n');
+  }
+  
   editMode.value = true;
   Message.info('已进入编辑模式');
 };
@@ -581,12 +655,31 @@ const startEdit = () => {
 const cancelEdit = () => {
   editConfig.value = {};
   editMode.value = false;
+  categoriesText.value = '';
   Message.info('已取消编辑');
 };
 
 const saveConfig = async () => {
   saving.value = true;
   try {
+    // 将categories文本转换为对象
+    if (categoriesText.value) {
+      const customCategories: Record<string, string> = {};
+      const lines = categoriesText.value.split('\n');
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+        const [key, ...nameParts] = trimmedLine.split('=');
+        if (key && nameParts.length > 0) {
+          customCategories[key.trim()] = nameParts.join('=').trim();
+        }
+      }
+      editConfig.value.categories_config = {
+        use_predefined: editConfig.value.categories_config?.use_predefined ?? true,
+        custom_categories: customCategories
+      };
+    }
+    
     const result = await configApi.update(editConfig.value);
     if (result.success) {
       Message.success(result.message || '配置保存成功');
@@ -594,6 +687,7 @@ const saveConfig = async () => {
       await loadConfig();
       editMode.value = false;
       editConfig.value = {};
+      categoriesText.value = '';
     } else {
       Message.error('保存配置失败: ' + (result.message || '未知错误'));
     }
@@ -607,6 +701,24 @@ const saveConfig = async () => {
 const saveAndReload = async () => {
   saving.value = true;
   try {
+    // 将categories文本转换为对象
+    if (categoriesText.value) {
+      const customCategories: Record<string, string> = {};
+      const lines = categoriesText.value.split('\n');
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+        const [key, ...nameParts] = trimmedLine.split('=');
+        if (key && nameParts.length > 0) {
+          customCategories[key.trim()] = nameParts.join('=').trim();
+        }
+      }
+      editConfig.value.categories_config = {
+        use_predefined: editConfig.value.categories_config?.use_predefined ?? true,
+        custom_categories: customCategories
+      };
+    }
+    
     const result = await configApi.update(editConfig.value);
     if (!result.success) {
       Message.error('保存配置失败: ' + (result.message || '未知错误'));
@@ -624,6 +736,7 @@ const saveAndReload = async () => {
         await loadConfig();
         editMode.value = false;
         editConfig.value = {};
+        categoriesText.value = '';
       } else {
         Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
       }

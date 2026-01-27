@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { Message } from '@arco-design/web-vue';
-import { healthApi, categoriesApi, wordsApi } from '@/api';
+import { healthApi, categoriesApi, wordsApi, logsApi } from '@/api';
 
 const stats = reactive({
   today: 0,
@@ -68,9 +68,19 @@ const categoryData = ref<Array<{ key: string; name: string; count: number }>>([]
 
 const loadData = async () => {
   try {
-    const [categories, wordCount] = await Promise.all([
+    // 计算今日的时间范围
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    // 转换为ISO格式字符串
+    const startTime = todayStart.toISOString();
+    const endTime = todayEnd.toISOString();
+
+    const [categories, wordCount, todayStats] = await Promise.all([
       categoriesApi.get(),
       wordsApi.get({ page: 1, page_size: 1 }),
+      logsApi.getStats(startTime, endTime),
     ]);
 
     if (categories.success && categories.data) {
@@ -92,6 +102,12 @@ const loadData = async () => {
           }
         });
       }
+    }
+
+    // 更新今日统计数据
+    if (todayStats.success && todayStats.data) {
+      stats.today = todayStats.data.total_requests || 0;
+      stats.sensitive = todayStats.data.sensitive_requests || 0;
     }
   } catch (error) {
     console.error('加载数据失败', error);

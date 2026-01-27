@@ -29,12 +29,44 @@
 
     <div class="filter-section">
       <a-form :model="filterForm" layout="inline">
+        <a-form-item label="时间维度">
+          <a-select v-model="timeDimension" style="width: 120px" @change="handleDimensionChange">
+            <a-option value="hour">小时</a-option>
+            <a-option value="day">日</a-option>
+            <a-option value="month">月</a-option>
+            <a-option value="year">年</a-option>
+          </a-select>
+        </a-form-item>
         <a-form-item label="时间范围">
           <a-range-picker
+            v-if="timeDimension === 'hour'"
             v-model="dateRange"
             show-time
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DDTHH:mm:ssZ"
+            style="width: 320px"
+          />
+          <a-range-picker
+            v-else-if="timeDimension === 'day'"
+            v-model="dateRange"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DDTHH:mm:ssZ"
+            style="width: 320px"
+          />
+          <a-range-picker
+            v-else-if="timeDimension === 'month'"
+            v-model="dateRange"
+            picker="month"
+            format="YYYY-MM"
+            value-format="YYYY-MM"
+            style="width: 320px"
+          />
+          <a-range-picker
+            v-else
+            v-model="dateRange"
+            picker="year"
+            format="YYYY"
+            value-format="YYYY"
             style="width: 320px"
           />
         </a-form-item>
@@ -49,14 +81,18 @@
       <a-row :gutter="16">
         <a-col :span="12">
           <a-card title="分类统计" :bordered="false">
-            <v-chart v-if="categoryChartData.length > 0" :option="categoryChartOption" autoresize />
-            <a-empty v-else description="暂无数据" />
+            <div class="chart-container">
+              <v-chart v-if="categoryChartData.length > 0" :option="categoryChartOption" style="width: 100%; height: 350px;" autoresize />
+              <a-empty v-else description="暂无数据" />
+            </div>
           </a-card>
         </a-col>
         <a-col :span="12">
-          <a-card title="小时趋势" :bordered="false">
-            <v-chart v-if="hourlyChartData.length > 0" :option="hourlyChartOption" autoresize />
-            <a-empty v-else description="暂无数据" />
+          <a-card :title="getTrendChartTitle()" :bordered="false">
+            <div class="chart-container">
+              <v-chart v-if="hourlyChartData.length > 0" :option="trendChartOption" style="width: 100%; height: 350px;" autoresize />
+              <a-empty v-else description="暂无数据" />
+            </div>
           </a-card>
         </a-col>
       </a-row>
@@ -69,13 +105,22 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { Message } from '@arco-design/web-vue';
 import { IconRefresh } from '@arco-design/web-vue/es/icon';
+import VChart from 'vue-echarts';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { PieChart, LineChart } from 'echarts/charts';
 import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
-import VChart from 'vue-echarts';
 
-use([CanvasRenderer, PieChart, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
+// 注册 echarts 组件
+use([
+  CanvasRenderer,
+  PieChart,
+  LineChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+]);
 
 interface Stats {
   totalRequests: number;
@@ -94,49 +139,99 @@ const stats = reactive<Stats>({
 
 const dateRange = ref<string[]>([]);
 const filterForm = reactive({});
+const timeDimension = ref<string>('hour');
 
 const categoryChartData = ref<any[]>([]);
 const hourlyChartData = ref<any[]>([]);
 
-const categoryChartOption = computed(() => ({
-  tooltip: { trigger: 'item' },
-  legend: { orient: 'vertical', left: 'left' },
-  series: [
-    {
-      type: 'pie',
-      radius: '50%',
-      data: categoryChartData.value,
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)',
+const categoryChartOption = computed(() => {
+  const option = {
+    tooltip: { trigger: 'item' },
+    legend: { orient: 'vertical', left: 'left' },
+    series: [
+      {
+        type: 'pie',
+        radius: '50%',
+        data: categoryChartData.value,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)',
+          },
         },
       },
-    },
-  ],
-}));
+    ],
+  };
+  console.log('分类图表配置:', option);
+  return option;
+});
 
-const hourlyChartOption = computed(() => ({
-  tooltip: { trigger: 'axis' },
-  xAxis: {
-    type: 'category',
-    data: hourlyChartData.value.map(item => item.hour),
-    axisLabel: { rotate: 45 },
-  },
-  yAxis: { type: 'value' },
-  series: [
-    {
-      type: 'line',
-      data: hourlyChartData.value.map(item => item.count),
-      smooth: true,
-      areaStyle: {},
+const trendChartOption = computed(() => {
+  let xAxisData: string[];
+  switch (timeDimension.value) {
+    case 'hour':
+      xAxisData = hourlyChartData.value.map(item => {
+        const date = new Date(item.hour);
+        return `${date.getHours().toString().padStart(2, '0')}:00`;
+      });
+      break;
+    case 'day':
+      xAxisData = hourlyChartData.value.map(item => {
+        const date = new Date(item.hour);
+        return `${date.getMonth() + 1}-${date.getDate()}`;
+      });
+      break;
+    case 'month':
+      xAxisData = hourlyChartData.value.map(item => {
+        const date = new Date(item.hour);
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+      });
+      break;
+    case 'year':
+      xAxisData = hourlyChartData.value.map(item => item.hour);
+      break;
+    default:
+      xAxisData = [];
+  }
+
+  const option = {
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: xAxisData,
+      axisLabel: { rotate: 45 },
     },
-  ],
-}));
+    yAxis: { type: 'value' },
+    series: [
+      {
+        type: 'line',
+        data: hourlyChartData.value.map(item => item.count),
+        smooth: true,
+        areaStyle: {},
+      },
+    ],
+  };
+  console.log('趋势图表配置:', option);
+  return option;
+});
 
 const loadData = async () => {
   await loadStats();
+};
+
+const getTrendChartTitle = () => {
+  const titleMap: Record<string, string> = {
+    hour: '小时趋势',
+    day: '日趋势',
+    month: '月趋势',
+    year: '年趋势',
+  };
+  return titleMap[timeDimension.value] || '趋势分析';
+};
+
+const handleDimensionChange = () => {
+  resetFilter();
 };
 
 const loadStats = async () => {
@@ -149,14 +244,22 @@ const loadStats = async () => {
       endTime = new Date(dateRange.value[1]);
     } else {
       const now = new Date();
-      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-      endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      if (timeDimension.value === 'hour' || timeDimension.value === 'day') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      } else if (timeDimension.value === 'month') {
+        startTime = new Date(now.getFullYear(), 0, 1);
+        endTime = new Date(now.getFullYear(), 11, 31);
+      } else {
+        startTime = new Date(now.getFullYear() - 5, 0, 1);
+        endTime = new Date(now.getFullYear(), 11, 31);
+      }
     }
 
     const params = new URLSearchParams({
       start_time: startTime.toISOString(),
       end_time: endTime.toISOString(),
-      group_by: 'hour',
+      group_by: timeDimension.value,
     });
 
     const response = await fetch(`/api/v1/logs/stats?${params}`, {
@@ -170,37 +273,78 @@ const loadStats = async () => {
     }
 
     const result = await response.json();
+    console.log('API返回原始数据:', result);
     if (result.success) {
       const data = result.data;
+      console.log('解析后的data:', data);
       stats.totalRequests = Number(data.total_requests) || 0;
       stats.sensitiveRequests = Number(data.sensitive_requests) || 0;
       stats.sensitiveRate = stats.totalRequests > 0 ? (stats.sensitiveRequests / stats.totalRequests) * 100 : 0;
 
-      categoryChartData.value = [];
+      // 处理分类统计数据
+      const tempCategoryData: Array<{ name: string; value: number }> = [];
       if (data.category_stats) {
+        console.log('category_stats:', data.category_stats);
         for (const [category, count] of Object.entries(data.category_stats as Record<string, number>)) {
-          categoryChartData.value.push({
+          tempCategoryData.push({
             name: category,
             value: count,
           });
         }
+        console.log('分类数据:', tempCategoryData);
+      } else {
+        console.warn('category_stats不存在或为空');
+      }
+      categoryChartData.value = tempCategoryData;
+
+      // 处理时间维度统计数据
+      const tempHourlyData: Array<{ hour: string; count: number }> = [];
+      let statsField: string;
+      switch (timeDimension.value) {
+        case 'hour':
+          statsField = 'hourly_stats';
+          break;
+        case 'day':
+          statsField = 'daily_stats';
+          break;
+        case 'month':
+          statsField = 'monthly_stats';
+          break;
+        case 'year':
+          statsField = 'yearly_stats';
+          break;
+        default:
+          statsField = 'hourly_stats';
       }
 
-      hourlyChartData.value = [];
-      if (data.hourly_stats) {
-        for (const [hour, count] of Object.entries(data.hourly_stats as Record<string, number>)) {
-          hourlyChartData.value.push({
+      if (data[statsField]) {
+        console.log(`${statsField}:`, data[statsField]);
+        for (const [hour, count] of Object.entries(data[statsField] as Record<string, number>)) {
+          tempHourlyData.push({
             hour,
             count,
           });
         }
-        hourlyChartData.value.sort((a, b) => a.hour.localeCompare(b.hour));
+        tempHourlyData.sort((a, b) => a.hour.localeCompare(b.hour));
+        console.log('时间数据:', tempHourlyData);
+      } else {
+        console.warn(`${statsField}不存在或为空`);
+      }
+      hourlyChartData.value = tempHourlyData;
+
+      // 只有在小时或日维度时才计算今日请求
+      if (timeDimension.value === 'hour' || timeDimension.value === 'day') {
+        const today = new Date().toDateString();
+        stats.todayRequests = hourlyChartData.value
+          .filter(item => new Date(item.hour).toDateString() === today)
+          .reduce((sum, item) => sum + item.count, 0);
+      } else {
+        stats.todayRequests = 0;
       }
 
-      const today = new Date().toDateString();
-      stats.todayRequests = hourlyChartData.value
-        .filter(item => new Date(item.hour).toDateString() === today)
-        .reduce((sum, item) => sum + item.count, 0);
+      console.log('最终状态 - 分类数据长度:', categoryChartData.value.length, '小时数据长度:', hourlyChartData.value.length);
+    } else {
+      console.error('API返回失败:', result);
     }
   } catch (error) {
     console.error('加载统计失败:', error);
@@ -219,8 +363,20 @@ const resetFilter = () => {
 
 onMounted(() => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  let start: Date;
+  let end: Date;
+
+  if (timeDimension.value === 'hour' || timeDimension.value === 'day') {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  } else if (timeDimension.value === 'month') {
+    start = new Date(now.getFullYear(), 0, 1);
+    end = new Date(now.getFullYear(), 11, 31);
+  } else {
+    start = new Date(now.getFullYear() - 5, 0, 1);
+    end = new Date(now.getFullYear(), 11, 31);
+  }
+
   dateRange.value = [start.toISOString(), end.toISOString()];
 
   loadData();
@@ -265,5 +421,18 @@ onMounted(() => {
 
 .charts-section {
   margin-bottom: 20px;
+}
+
+/* 图表容器样式 */
+.chart-container {
+  width: 100%;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.charts-section :deep(.arco-card-body) {
+  padding: 20px;
 }
 </style>
