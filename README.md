@@ -1,6 +1,42 @@
 # 敏感词检测管理系统 
+一个高性能的敏感词检测和过滤库，基于 Go 语言开发，采用整洁架构设计。专注于中文文本的敏感词检测，支持多种检测策略和灵活的扩展机制。
+## 主要特性
 
-基于 Vite + Vue 3 + TypeScript + Arco Design 的前端项目。
+- 🚀 超高性能：基于优化的 Trie 和 AC 自动机算法
+- 📚 并发安全：支持高并发场景，内置多重并发优化机制
+- 📚 海量词库：内置20W+敏感词，经过深度优化和去重后保留7W+高质量词条
+- 🎯 精准检测：支持多种文本匹配策略
+- 🔄 灵活分类：支持多种敏感词分类（涉黄、涉政、暴力等），可独立开关
+- 🛠 可扩展：支持自定义词库扩展，支持动态更新
+- 📦 轻量级：无外部依赖，即插即用
+- 🔒 安全性：内置多种反规避机制
+- 💡 智能匹配：支持模糊匹配、变体识别
+- 🤖 AI辅助：支持OpenAI、Anthropic等多种AI模型进行智能检测
+
+
+# Quick Start
+```
+docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/daf:latest
+```
+
+# Quick Upgrade
+```
+docker stop daf
+docker rm daf
+docker pull ghcr.io/rachelos/daf:latest
+# If you added other parameters, please modify accordingly
+docker run -d  --name we-mp-rss  -p 8088:8088 -v ./data:/app/data  ghcr.io/rachelos/go-daf:latest
+```
+
+# Official Image
+```
+docker run -d  --name daf  -p 8088:8088 -v ./data:/app/data  rachelos/go-daf:latest
+```
+# Proxy Mirror for Faster Access (Faster access in China)
+```
+docker run -d  --name we-mp-rss  -p 8088:8088 -v ./data:/app/data  docker.1ms.run/rachelos/go-daf:latest  
+```
+
 ## 界面预览
 登录
 <img alt="image" src="https://github.com/user-attachments/assets/a8894c9d-9ce6-49e4-a158-33313024dcee" />
@@ -30,14 +66,7 @@ AK管理
 <img width="608" height="883" alt="image" src="https://github.com/user-attachments/assets/a7d8126c-a7a1-41a6-a131-7c7afa456be8" />
 
 
-## 功能特性
 
-- 文本检测 - 快速检测和全量检测敏感词
-- 文本过滤 - 自动过滤文本中的敏感词
-- 词汇管理 - 批量添加/删除敏感词
-- 用户管理 - 管理系统用户和权限（管理员）
-- 分类信息 - 查看系统支持的敏感词分类
-- 用户认证 - JWT Token 认证登录
 
 ## 技术栈
 
