@@ -11,6 +11,7 @@
   "dependencies": {
     "@arco-design/web-vue": "^2.60.0",
     "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.11",
     "echarts": "^5.4.3",
     "pinia": "^2.1.7",

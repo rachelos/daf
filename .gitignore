@@ -105,6 +105,7 @@ __debug*
 daf_linux_amd64
 # Local configuration files (not committed to repository)
 config.local.yml
+.env
 data/*
 log/*
 dist/*

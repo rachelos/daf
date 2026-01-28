@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { isEncryptionEnabled, createEncryption } from '../utils/encryption-optional';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -8,8 +9,15 @@ export interface ApiResponse<T = any> {
 
 class ApiClient {
   private client: AxiosInstance;
+  private encryption: any = null;
 
   constructor() {
+    // 初始化加密（如果配置了密钥）
+    this.encryption = createEncryption();
+    if (this.encryption) {
+      console.log('✓ API加密已启用');
+    }
+
     this.client = axios.create({
       baseURL: '/api/v1',
       timeout: 30000,
@@ -20,11 +28,35 @@ class ApiClient {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // 加密请求体（如果启用加密且存在data）
+      if (this.encryption && config.data && typeof config.data === 'object' && config.method !== 'get') {
+        try {
+          const encrypted = this.encryption.encryptJSON(config.data);
+          config.data = encrypted;
+          config.headers['X-Encrypted'] = 'true';
+        } catch (error) {
+          console.warn('加密请求失败，使用未加密请求:', error);
+          // 继续发送未加密的请求
+        }
+      }
+
       return config;
     });
 
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // 解密响应体（如果启用加密且响应头标记为加密）
+        if (this.encryption && response.headers['x-encrypted'] === 'true') {
+          try {
+            const decrypted = this.encryption.decryptJSON(response.data);
+            response.data = decrypted;
+          } catch (error) {
+            console.warn('解密响应失败:', error);
+          }
+        }
+        return response;
+      },
       (error) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('auth_token');
