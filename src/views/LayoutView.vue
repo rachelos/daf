@@ -86,8 +86,8 @@
       <a-layout-sider
         :class="['sider', { 'mobile-visible': mobileMenuVisible }]"
         :width="240"
-        :collapsed="!mobileMenuVisible && collapsed"
-        :collapsible="!mobileMenuVisible"
+        :collapsed="collapsed && !isMobile"
+        :collapsible="!isMobile"
         breakpoint="xl"
         @collapse="handleCollapse"
       >
@@ -230,7 +230,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { Message, Modal } from '@arco-design/web-vue';
 import { useUserStore } from '@/stores/user';
@@ -247,6 +247,7 @@ const selectedKeys = ref<string[]>(['stats']);
 const openKeys = ref<string[]>(['data-center', 'detection', 'word-manage', 'system-manage']);
 const collapsed = ref(false);
 const mobileMenuVisible = ref(false);
+const isMobile = ref(false);
 const changePasswordVisible = ref(false);
 const passwordForm = reactive({
   oldPassword: '',
@@ -278,7 +279,7 @@ const handleMenuClick = (key: string) => {
   // 注意：父级菜单的 key 是子菜单组的 key，不是菜单项的 key
   router.push(`/${key}`);
   // 移动端点击菜单项后关闭菜单
-  if (window.innerWidth <= 768) {
+  if (isMobile.value) {
     mobileMenuVisible.value = false;
   }
 };
@@ -333,6 +334,12 @@ const handleCollapse = (val: boolean) => {
 
 const toggleMobileMenu = () => {
   mobileMenuVisible.value = !mobileMenuVisible.value;
+};
+
+const checkScreenSize = () => {
+  if (typeof window !== 'undefined') {
+    isMobile.value = window.innerWidth <= 768;
+  }
 };
 
 const fetchSystemTitle = async () => {
@@ -480,6 +487,19 @@ onMounted(() => {
   checkHealth();
   fetchSystemTitle();
   fetchConfig();
+  checkScreenSize();
+
+  // 监听窗口大小变化
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', checkScreenSize);
+  }
+});
+
+// 清理事件监听器
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', checkScreenSize);
+  }
 });
 </script>
 
@@ -774,13 +794,25 @@ onMounted(() => {
     top: 56px;
     z-index: 1000;
     width: 240px !important;
+    min-width: 240px !important;
+    max-width: 240px !important;
     height: calc(100vh - 56px);
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     transition: left 0.3s ease;
     overflow-y: auto;
+    overflow-x: hidden;
 
     &.mobile-visible {
       left: 0;
+    }
+
+    // 覆盖 Arco Design 的折叠样式
+    :deep(.arco-layout-sider-trigger) {
+      display: none;
+    }
+
+    :deep(.arco-layout-sider-children) {
+      width: 240px !important;
     }
   }
 
