@@ -172,7 +172,7 @@ const editModalVisible = ref(false);
 const createForm = reactive({
   username: '',
   password: '',
-  roles: [] as string[],
+  roles: ['user'] as string[],
   is_active: true,
 });
 
@@ -230,7 +230,7 @@ const handleCreate = async () => {
 const resetCreateForm = () => {
   createForm.username = '';
   createForm.password = '';
-  createForm.roles = [];
+  createForm.roles = ['user'];
   createForm.is_active = true;
 };
 
