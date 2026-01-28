@@ -338,32 +338,38 @@ const toggleAI = async () => {
     Message.warning('配置未加载，请稍候');
     return;
   }
-  
+
   const newValue = !config.value.ai.enabled;
-  try {
-    // 创建更新的配置副本
-    const updateData = JSON.parse(JSON.stringify(config.value));
-    updateData.ai.enabled = newValue;
-    
-    // 更新配置
-    const updateResult = await configApi.update(updateData);
-    if (!updateResult.success) {
-      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
-      return;
+  Modal.confirm({
+    title: '确认操作',
+    content: newValue ? '确定要启用AI检测功能吗？' : '确定要关闭AI检测功能吗？',
+    onOk: async () => {
+      try {
+        // 创建更新的配置副本
+        const updateData = JSON.parse(JSON.stringify(config.value));
+        updateData.ai.enabled = newValue;
+
+        // 更新配置
+        const updateResult = await configApi.update(updateData);
+        if (!updateResult.success) {
+          Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+          return;
+        }
+
+        // 重新加载配置
+        const reloadResult = await configApi.reloadConfig();
+        if (reloadResult.success) {
+          Message.success(newValue ? 'AI检测已启用' : 'AI检测已关闭');
+          // 重新获取配置以更新显示
+          await fetchConfig();
+        } else {
+          Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+        }
+      } catch (error: any) {
+        Message.error('切换AI检测失败: ' + (error.message || '未知错误'));
+      }
     }
-    
-    // 重新加载配置
-    const reloadResult = await configApi.reloadConfig();
-    if (reloadResult.success) {
-      Message.success(newValue ? 'AI检测已启用' : 'AI检测已关闭');
-      // 重新获取配置以更新显示
-      await fetchConfig();
-    } else {
-      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
-    }
-  } catch (error: any) {
-    Message.error('切换AI检测失败: ' + (error.message || '未知错误'));
-  }
+  });
 };
 
 const toggleCascade = async () => {
@@ -371,32 +377,38 @@ const toggleCascade = async () => {
     Message.warning('配置未加载，请稍候');
     return;
   }
-  
+
   const newValue = !config.value.cascade.enabled;
-  try {
-    // 创建更新的配置副本
-    const updateData = JSON.parse(JSON.stringify(config.value));
-    updateData.cascade.enabled = newValue;
-    
-    // 更新配置
-    const updateResult = await configApi.update(updateData);
-    if (!updateResult.success) {
-      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
-      return;
+  Modal.confirm({
+    title: '确认操作',
+    content: newValue ? '确定要启用级联功能吗？' : '确定要关闭级联功能吗？',
+    onOk: async () => {
+      try {
+        // 创建更新的配置副本
+        const updateData = JSON.parse(JSON.stringify(config.value));
+        updateData.cascade.enabled = newValue;
+
+        // 更新配置
+        const updateResult = await configApi.update(updateData);
+        if (!updateResult.success) {
+          Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+          return;
+        }
+
+        // 重新加载配置
+        const reloadResult = await configApi.reloadConfig();
+        if (reloadResult.success) {
+          Message.success(newValue ? '级联功能已启用' : '级联功能已关闭');
+          // 重新获取配置以更新显示
+          await fetchConfig();
+        } else {
+          Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+        }
+      } catch (error: any) {
+        Message.error('切换级联功能失败: ' + (error.message || '未知错误'));
+      }
     }
-    
-    // 重新加载配置
-    const reloadResult = await configApi.reloadConfig();
-    if (reloadResult.success) {
-      Message.success(newValue ? '级联功能已启用' : '级联功能已关闭');
-      // 重新获取配置以更新显示
-      await fetchConfig();
-    } else {
-      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
-    }
-  } catch (error: any) {
-    Message.error('切换级联功能失败: ' + (error.message || '未知错误'));
-  }
+  });
 };
 
 const toggleDictionary = async () => {
@@ -404,32 +416,38 @@ const toggleDictionary = async () => {
     Message.warning('配置未加载，请稍候');
     return;
   }
-  
+
   const newValue = !config.value.dictionary.load_default_words;
-  try {
-    // 创建更新的配置副本
-    const updateData = JSON.parse(JSON.stringify(config.value));
-    updateData.dictionary.load_default_words = newValue;
-    
-    // 更新配置
-    const updateResult = await configApi.update(updateData);
-    if (!updateResult.success) {
-      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
-      return;
+  Modal.confirm({
+    title: '确认操作',
+    content: newValue ? '确定要启用系统词库吗？' : '确定要关闭系统词库吗？',
+    onOk: async () => {
+      try {
+        // 创建更新的配置副本
+        const updateData = JSON.parse(JSON.stringify(config.value));
+        updateData.dictionary.load_default_words = newValue;
+
+        // 更新配置
+        const updateResult = await configApi.update(updateData);
+        if (!updateResult.success) {
+          Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+          return;
+        }
+
+        // 重新加载配置
+        const reloadResult = await configApi.reloadConfig();
+        if (reloadResult.success) {
+          Message.success(newValue ? '系统词库已启用' : '系统词库已关闭');
+          // 重新获取配置以更新显示
+          await fetchConfig();
+        } else {
+          Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+        }
+      } catch (error: any) {
+        Message.error('切换系统词库失败: ' + (error.message || '未知错误'));
+      }
     }
-    
-    // 重新加载配置
-    const reloadResult = await configApi.reloadConfig();
-    if (reloadResult.success) {
-      Message.success(newValue ? '系统词库已启用' : '系统词库已关闭');
-      // 重新获取配置以更新显示
-      await fetchConfig();
-    } else {
-      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
-    }
-  } catch (error: any) {
-    Message.error('切换系统词库失败: ' + (error.message || '未知错误'));
-  }
+  });
 };
 
 onMounted(() => {
