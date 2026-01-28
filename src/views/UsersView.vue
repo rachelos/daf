@@ -120,8 +120,8 @@
             v-model:page-size="pageSize"
             :total="total"
             :show-total="true"
-            :show-jumper="true"
-            :show-page-size="true"
+            :show-jumper="false"
+            :show-page-size="false"
             @change="handlePageChange"
             @page-size-change="handlePageSizeChange"
             class="pagination"
@@ -467,12 +467,13 @@ onMounted(() => {
       margin-top: 20px;
       display: flex;
       justify-content: center;
+      overflow-x: auto;
 
       :deep(.arco-pagination) {
-        font-size: 14px;
+        font-size: 13px;
+        min-width: 200px;
 
         .arco-pagination-item,
-        .arco-pagination-jump-input,
         .arco-pagination-total {
           font-size: 13px;
         }
