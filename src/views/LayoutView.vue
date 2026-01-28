@@ -8,6 +8,13 @@
       </div>
 
       <div class="header-right">
+        <!-- 移动端菜单按钮 -->
+        <a-button shape="circle" size="small" class="mobile-menu-btn" @click="toggleMobileMenu">
+          <template #icon>
+            <icon-list />
+          </template>
+        </a-button>
+
         <div class="status-indicator">
           <div :class="['status-dot', statusOnline ? 'online' : 'offline']" />
           <span>{{ statusText }}</span>
@@ -76,7 +83,14 @@
     <!-- 下左右布局 -->
     <a-layout class="sub-layout">
       <!-- 左侧菜单 -->
-      <a-layout-sider class="sider" :width="240" :collapsed="collapsed" collapsible breakpoint="xl" @collapse="handleCollapse">
+      <a-layout-sider
+        :class="['sider', { 'mobile-visible': mobileMenuVisible }]"
+        :width="240"
+        :collapsed="!mobileMenuVisible && collapsed"
+        :collapsible="!mobileMenuVisible"
+        breakpoint="xl"
+        @collapse="handleCollapse"
+      >
         <a-menu
           v-model:selected-keys="selectedKeys"
           v-model:open-keys="openKeys"
@@ -198,6 +212,9 @@
       </a-layout-content>
     </a-layout>
 
+    <!-- 移动端菜单遮罩层 -->
+    <div v-if="mobileMenuVisible" class="mobile-overlay" @click="toggleMobileMenu"></div>
+
     <!-- 修改密码弹窗 -->
     <a-modal v-model:visible="changePasswordVisible" title="修改密码" @ok="handleChangePassword">
       <a-form :model="passwordForm" layout="vertical">
@@ -229,6 +246,7 @@ const statusText = ref('检查中...');
 const selectedKeys = ref<string[]>(['stats']);
 const openKeys = ref<string[]>(['data-center', 'detection', 'word-manage', 'system-manage']);
 const collapsed = ref(false);
+const mobileMenuVisible = ref(false);
 const changePasswordVisible = ref(false);
 const passwordForm = reactive({
   oldPassword: '',
@@ -259,6 +277,10 @@ const handleMenuClick = (key: string) => {
   // 如果点击的是父级菜单（有子菜单），则不跳转
   // 注意：父级菜单的 key 是子菜单组的 key，不是菜单项的 key
   router.push(`/${key}`);
+  // 移动端点击菜单项后关闭菜单
+  if (window.innerWidth <= 768) {
+    mobileMenuVisible.value = false;
+  }
 };
 
 const handleLogout = () => {
@@ -307,6 +329,10 @@ const handleChangePassword = async () => {
 
 const handleCollapse = (val: boolean) => {
   collapsed.value = val;
+};
+
+const toggleMobileMenu = () => {
+  mobileMenuVisible.value = !mobileMenuVisible.value;
 };
 
 const fetchSystemTitle = async () => {
@@ -492,9 +518,18 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.logo span {
+  display: block;
+}
+
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.mobile-menu-btn {
+  display: none;
 }
 
 .sub-layout {
@@ -645,6 +680,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   cursor: pointer;
+  gap: 8px;
 }
 
 .username {
@@ -658,5 +694,140 @@ onMounted(() => {
   overflow-x: hidden;
   padding: 24px;
   background: var(--color-bg-1);
+}
+
+// 手机端适配
+@media (max-width: 768px) {
+  .top-header {
+    padding: 0 12px;
+    height: 56px;
+  }
+
+  .logo {
+    font-size: 16px;
+  }
+
+  .logo svg {
+    font-size: 20px;
+    margin-right: 6px;
+  }
+
+  .logo span {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  // 隐藏部分状态信息
+  .status-indicator {
+    margin-right: 8px;
+
+    span {
+      display: none;
+    }
+  }
+
+  .feature-status {
+    gap: 6px;
+    margin-right: 8px;
+  }
+
+  .feature-tag {
+    padding: 3px 8px;
+    gap: 4px;
+    font-size: 11px;
+
+    &.ai-status,
+    &.cascade-status,
+    &.dictionary-status {
+      svg {
+        font-size: 12px;
+      }
+    }
+
+    span {
+      display: none;
+    }
+  }
+
+  // 隐藏修改密码按钮
+  .user-info .username {
+    display: none;
+  }
+
+  .user-info a-button {
+    padding: 0 4px;
+  }
+
+  .sider {
+    position: fixed;
+    left: -240px;
+    top: 56px;
+    z-index: 1000;
+    width: 240px !important;
+    height: calc(100vh - 56px);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    transition: left 0.3s ease;
+    overflow-y: auto;
+
+    &.mobile-visible {
+      left: 0;
+    }
+  }
+
+  .mobile-overlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  // 优化菜单项
+  :deep(.arco-menu-inline-header) {
+    height: 44px;
+    line-height: 44px;
+    padding: 0 12px;
+  }
+
+  :deep(.arco-menu-item) {
+    height: 36px;
+    line-height: 36px;
+    padding: 0 12px 0 24px;
+  }
+}
+
+// 超小屏幕适配（iPhone SE 等）
+@media (max-width: 375px) {
+  .top-header {
+    padding: 0 8px;
+  }
+
+  .logo span {
+    max-width: 80px;
+  }
+
+  .feature-status {
+    gap: 4px;
+  }
+
+  .feature-tag {
+    padding: 2px 6px;
+  }
 }
 </style>
