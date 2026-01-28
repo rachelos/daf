@@ -12,33 +12,58 @@ class ApiClient {
   private encryption: any = null;
 
   constructor() {
-    // 初始化加密（如果配置了密钥）
-    this.encryption = createEncryption();
-    if (this.encryption) {
-      console.log('✓ API加密已启用');
-    }
+    // 调试：检查加密配置
+    console.log('=== 加密配置调试 ===');
+
+    // 初始化加密（从后端获取密钥）
+    this.initializeEncryption();
 
     this.client = axios.create({
       baseURL: '/api/v1',
       timeout: 30000,
     });
 
-    this.client.interceptors.request.use((config) => {
+    this.client.interceptors.request.use(async (config) => {
       const token = localStorage.getItem('auth_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
+      // 调试：输出请求信息
+      console.log('=== 请求拦截器 ===');
+      console.log('URL:', config.url);
+      console.log('Method:', config.method);
+      console.log('Data:', config.data);
+      console.log('DataType:', typeof config.data);
+      console.log('Has encryption:', !!this.encryption);
+
       // 加密请求体（如果启用加密且存在data）
+      // 只有当真正加密了请求体时，才设置 X-Encrypted: true
+      // 这样可以避免后端尝试解密未加密的数据
+
+      // 情况1: 启用了加密且有需要加密的请求体（非 GET 请求，data 是对象）
       if (this.encryption && config.data && typeof config.data === 'object' && config.method !== 'get') {
+        console.log('尝试加密请求体...');
         try {
           const encrypted = this.encryption.encryptJSON(config.data);
+          console.log('加密成功，原始长度:', JSON.stringify(config.data).length, '加密后长度:', encrypted.length);
           config.data = encrypted;
           config.headers['X-Encrypted'] = 'true';
+          console.log('已设置 X-Encrypted: true（请求体已加密）');
         } catch (error) {
           console.warn('加密请求失败，使用未加密请求:', error);
-          // 继续发送未加密的请求
+          // 加密失败，不设置加密头，继续发送未加密的请求
         }
+      }
+      // 情况2: 启用了加密但没有需要加密的请求体（GET 请求或无请求体或非对象类型）
+      else if (this.encryption && (!config.data || config.method === 'get' || typeof config.data !== 'object')) {
+        // 设置加密头但不加密请求体，只让后端知道需要加密响应
+        config.headers['X-Encrypted'] = 'true';
+        console.log('已设置 X-Encrypted: true（仅加密响应，请求体未加密）');
+      }
+      // 情况3: 加密未启用
+      else {
+        console.log('加密未启用，跳过加密处理');
       }
 
       return config;
@@ -46,14 +71,27 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response) => {
+        // 调试：输出响应信息
+        console.log('=== 响应拦截器 ===');
+        console.log('URL:', response.config.url);
+        console.log('Status:', response.status);
+        console.log('Has encryption:', !!this.encryption);
+        console.log('Response headers:', JSON.stringify(response.headers, null, 2));
+        console.log('x-encrypted value:', response.headers['x-encrypted']);
+        console.log('Response data type:', typeof response.data);
+
         // 解密响应体（如果启用加密且响应头标记为加密）
         if (this.encryption && response.headers['x-encrypted'] === 'true') {
+          console.log('检测到加密响应，开始解密...');
           try {
             const decrypted = this.encryption.decryptJSON(response.data);
+            console.log('解密成功');
             response.data = decrypted;
           } catch (error) {
             console.warn('解密响应失败:', error);
           }
+        } else {
+          console.log('未检测到加密响应头，跳过解密');
         }
         return response;
       },
@@ -66,6 +104,30 @@ class ApiClient {
         return Promise.reject(new Error(error.response?.data?.message || error.message));
       }
     );
+  }
+
+  /**
+   * 初始化加密（从后端获取密钥）
+   */
+  private async initializeEncryption() {
+    try {
+      const enabled = await isEncryptionEnabled();
+      console.log('后端加密启用状态:', enabled);
+
+      if (enabled) {
+        this.encryption = await createEncryption();
+        if (this.encryption) {
+          console.log('✓ API加密已启用（密钥从后端获取）');
+        } else {
+          console.log('✗ 创建加密实例失败');
+        }
+      } else {
+        console.log('✗ 后端未启用加密');
+      }
+    } catch (error) {
+      console.error('初始化加密失败:', error);
+      this.encryption = null;
+    }
   }
 
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
