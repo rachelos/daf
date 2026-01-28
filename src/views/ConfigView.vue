@@ -552,6 +552,56 @@
           </a-form>
         </a-card>
 
+        <!-- 加密配置 -->
+        <a-card title="加密配置" class="mb-4" :bordered="false">
+          <a-descriptions v-if="!editMode" :column="1" bordered>
+            <a-descriptions-item label="加密状态">
+              <a-tag :color="config.encryption?.enabled ? 'green' : 'red'">
+                {{ config.encryption?.enabled ? '已启用' : '未启用' }}
+              </a-tag>
+            </a-descriptions-item>
+            <a-descriptions-item label="加密算法" v-if="config.encryption?.enabled">
+              {{ config.encryption?.algorithm || 'AES-256-CBC' }}
+            </a-descriptions-item>
+            <a-descriptions-item label="密钥长度" v-if="config.encryption?.enabled">
+              32 字节 (256位)
+            </a-descriptions-item>
+            <a-descriptions-item label="密钥状态" v-if="config.encryption?.enabled">
+              <a-tag color="blue">已配置</a-tag>
+            </a-descriptions-item>
+          </a-descriptions>
+          <a-form v-else :model="editConfig" layout="vertical">
+            <a-row :gutter="{ xs: 8, sm: 16 }">
+              <a-col :span="24">
+                <a-form-item label="启用加密传输" extra="启用后，所有API请求和响应都将使用AES-256-CBC加密">
+                  <a-switch v-model="editConfig.encryption.enabled" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24" v-if="editConfig.encryption?.enabled">
+                <a-form-item label="加密密钥" extra="32字节Base64编码的密钥，用于AES-256-CBC加密">
+                  <a-input-password v-model="editConfig.encryption.key" placeholder="输入加密密钥" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24" v-if="editConfig.encryption?.enabled">
+                <a-form-item label="加密算法">
+                  <a-input v-model="editConfig.encryption.algorithm" disabled placeholder="AES-256-CBC" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="24" v-if="editConfig.encryption?.enabled">
+                <a-form-item>
+                  <a-button type="primary" @click="generateEncryptionKey" size="small">
+                    <template #icon>
+                      <icon-refresh />
+                    </template>
+                    生成新密钥
+                  </a-button>
+                  <span class="ml-2 text-gray-500">注意：生成新密钥后需要刷新前端页面</span>
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-form>
+        </a-card>
+
       </a-card>
     </a-spin>
   </div>
@@ -582,6 +632,11 @@ interface ConfigData {
   ai?: any;
   cascade?: any;
   server?: any;
+  encryption?: {
+    enabled: boolean;
+    key: string;
+    algorithm: string;
+  };
   categories?: Array<{ key: string; name: string; value: string }>;
   categories_config?: {
     use_predefined: boolean;
@@ -625,7 +680,16 @@ const loadConfig = async () => {
 const startEdit = () => {
   // 深拷贝配置到编辑对象
   editConfig.value = JSON.parse(JSON.stringify(config.value));
-  
+
+  // 初始化encryption
+  if (!editConfig.value.encryption) {
+    editConfig.value.encryption = {
+      enabled: false,
+      key: '',
+      algorithm: 'AES-256-CBC'
+    };
+  }
+
   // 初始化categories_config
   if (!editConfig.value.categories_config) {
     editConfig.value.categories_config = {
@@ -683,7 +747,12 @@ const saveConfig = async () => {
         custom_categories: customCategories
       };
     }
-    
+
+    // 调试：输出保存的配置
+    console.log('=== 保存配置 ===');
+    console.log('完整配置:', JSON.stringify(editConfig.value, null, 2));
+    console.log('加密配置:', JSON.stringify(editConfig.value.encryption, null, 2));
+
     const result = await configApi.update(editConfig.value);
     if (result.success) {
       Message.success(result.message || '配置保存成功');
@@ -782,6 +851,25 @@ const restartServer = () => {
       }
     },
   });
+};
+
+const generateEncryptionKey = () => {
+  // 生成32字节随机密钥
+  const array = new Uint8Array(32);
+  if (window.crypto && window.crypto.getRandomValues) {
+    // 使用Web Crypto API生成安全的随机数
+    window.crypto.getRandomValues(array);
+  } else {
+    // 降级方案：使用Math.random（不安全，仅作后备）
+    for (let i = 0; i < 32; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+  }
+
+  // 转换为Base64
+  const base64 = btoa(String.fromCharCode.apply(null, Array.from(array)));
+  editConfig.value.encryption.key = base64;
+  Message.success('已生成新密钥，请保存配置');
 };
 
 onMounted(() => {
