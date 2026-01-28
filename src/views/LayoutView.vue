@@ -207,6 +207,12 @@
               </template>
               AK管理
             </a-menu-item>
+            <a-menu-item key="login-logs">
+              <template #icon>
+                <icon-history />
+              </template>
+              登录日志
+            </a-menu-item>
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>

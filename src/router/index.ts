@@ -71,6 +71,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, requiresAdmin: true },
       },
       {
+        path: 'login-logs',
+        name: 'LoginLogs',
+        component: () => import('@/views/LoginLogsView.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
         path: 'detection-logs',
         name: 'DetectionLogs',
         component: () => import('@/views/DetectionLogsView.vue'),

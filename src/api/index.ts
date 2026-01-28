@@ -212,6 +212,10 @@ export const usersApi = {
     api.post('/users', data),
   delete: (userId: string) => api.delete(`/users/${userId}`),
   update: (userId: string, data: any) => api.put(`/users/${userId}`, data),
+  getMyLoginLogs: (params?: { limit?: number }) =>
+    api.get<{ logs: any[]; total: number }>('/auth/login-logs', { params }),
+  getAllLoginLogs: (params?: { page?: number; page_size?: number; username?: string }) =>
+    api.get<{ logs: any[]; total: number; page: number; page_size: number }>('/admin/login-logs', { params }),
 };
 
 export const accessKeysApi = {
