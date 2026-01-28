@@ -2,18 +2,15 @@
   <a-layout class="layout">
     <!-- 顶部通栏 -->
     <a-layout-header class="top-header">
-      <div class="logo">
-        <icon-shield />
+      <div class="logo" v-if="!isMobile" @click="router.push('/')">
+         <img class="svg" src="@/assets/logo.svg" alt="{{ systemTitle }}" />
         <span>{{ systemTitle }}</span>
+      </div>
+      <div class="logo" v-else @click="toggleMobileMenu">
+        <img class="svg" src="@/assets/logo.svg" alt="{{ systemTitle }}" />
       </div>
 
       <div class="header-right">
-        <!-- 移动端菜单按钮 -->
-        <a-button shape="circle" size="small" class="mobile-menu-btn" @click="toggleMobileMenu">
-          <template #icon>
-            <icon-list />
-          </template>
-        </a-button>
 
         <div class="status-indicator">
           <div :class="['status-dot', statusOnline ? 'online' : 'offline']" />
@@ -136,7 +133,7 @@
               </template>
               文本过滤
             </a-menu-item>
-            <a-menu-item key="correction">
+            <!-- <a-menu-item key="correction">
               <template #icon>
                 <icon-thunderbolt />
               </template>
@@ -147,7 +144,7 @@
                 <icon-edit />
               </template>
               纠错词库
-            </a-menu-item>
+            </a-menu-item> -->
           </a-sub-menu>
 
           <a-sub-menu key="word-manage">
@@ -536,9 +533,13 @@ onUnmounted(() => {
   align-items: center;
   font-size: 18px;
   font-weight: 500;
+  cursor: pointer;
   color: var(--primary-color);
 }
-
+.logo .svg{
+  width:2rem;
+  margin-right:1rem;
+}
 .logo svg {
   margin-right: 10px;
   font-size: 24px;
