@@ -2,49 +2,95 @@
   <div class="words-list-view">
     <a-card title="词库列表" :bordered="false">
       <template #extra>
-        <a-space :size="12">
-          <a-input
-            v-model="searchKeyword"
-            placeholder="搜索关键词"
-            style="width: 200px"
-            allow-clear
-            @input="handleSearch"
-          >
-            <template #prefix>
-              <icon-search />
-            </template>
-          </a-input>
-          <a-select
-            v-model="filterCategory"
-            placeholder="筛选分类"
-            style="width: 150px"
-            allow-clear
-            @change="handleFilterCategory"
-          >
-            <a-option value="">全部分类</a-option>
-            <a-option v-for="(name, key) in categories" :key="key" :value="key">
-              {{ name }}
-            </a-option>
-          </a-select>
-          <a-select
-            v-model="pageSize"
-            placeholder="每页条数"
-            style="width: 120px"
-            @change="handlePageSizeChange"
-          >
-            <a-option :value="10">10条/页</a-option>
-            <a-option :value="20">20条/页</a-option>
-            <a-option :value="50">50条/页</a-option>
-            <a-option :value="100">100条/页</a-option>
-          </a-select>
-          <a-button type="primary" @click="handleRefresh" :loading="loading">
-            <template #icon>
-              <icon-refresh />
-            </template>
-            刷新
-          </a-button>
-        </a-space>
+        <div class="header-actions">
+          <a-space :size="12" class="actions-desktop">
+            <a-input
+              v-model="searchKeyword"
+              placeholder="搜索关键词"
+              style="width: 200px"
+              allow-clear
+              @input="handleSearch"
+            >
+              <template #prefix>
+                <icon-search />
+              </template>
+            </a-input>
+            <a-select
+              v-model="filterCategory"
+              placeholder="筛选分类"
+              style="width: 150px"
+              allow-clear
+              @change="handleFilterCategory"
+            >
+              <a-option value="">全部分类</a-option>
+              <a-option v-for="(name, key) in categories" :key="key" :value="key">
+                {{ name }}
+              </a-option>
+            </a-select>
+            <a-select
+              v-model="pageSize"
+              placeholder="每页条数"
+              style="width: 120px"
+              @change="handlePageSizeChange"
+            >
+              <a-option :value="10">10条/页</a-option>
+              <a-option :value="20">20条/页</a-option>
+              <a-option :value="50">50条/页</a-option>
+              <a-option :value="100">100条/页</a-option>
+            </a-select>
+            <a-button type="primary" @click="handleRefresh" :loading="loading">
+              <template #icon>
+                <icon-refresh />
+              </template>
+              刷新
+            </a-button>
+          </a-space>
+        </div>
       </template>
+
+      <!-- 移动端筛选器 -->
+      <div class="mobile-filters">
+        <a-input
+          v-model="searchKeyword"
+          placeholder="搜索关键词"
+          allow-clear
+          @input="handleSearch"
+          style="margin-bottom: 12px"
+        >
+          <template #prefix>
+            <icon-search />
+          </template>
+        </a-input>
+        <a-select
+          v-model="filterCategory"
+          placeholder="筛选分类"
+          allow-clear
+          @change="handleFilterCategory"
+          style="margin-bottom: 12px"
+        >
+          <a-option value="">全部分类</a-option>
+          <a-option v-for="(name, key) in categories" :key="key" :value="key">
+            {{ name }}
+          </a-option>
+        </a-select>
+        <a-select
+          v-model="pageSize"
+          placeholder="每页条数"
+          @change="handlePageSizeChange"
+          style="margin-bottom: 12px"
+        >
+          <a-option :value="10">10条/页</a-option>
+          <a-option :value="20">20条/页</a-option>
+          <a-option :value="50">50条/页</a-option>
+          <a-option :value="100">100条/页</a-option>
+        </a-select>
+        <a-button type="primary" @click="handleRefresh" :loading="loading" style="width: 100%">
+          <template #icon>
+            <icon-refresh />
+          </template>
+          刷新
+        </a-button>
+      </div>
 
       <a-table
         :columns="columns"
@@ -100,6 +146,7 @@
       @ok="handleConfirmEdit"
       @cancel="handleCancelEdit"
       width="500px"
+      class="edit-modal"
     >
       <a-form :model="editForm" layout="vertical">
         <a-form-item label="敏感词" required>
@@ -146,12 +193,12 @@ const editForm = ref({
 });
 
 const columns = [
-  {
-    title: '序号',
-    dataIndex: 'index',
-    slotName: 'index',
-    width: 100,
-  },
+  // {
+  //   title: '序号',
+  //   dataIndex: 'index',
+  //   slotName: 'index',
+  //   width: 100,
+  // },
   {
     title: '敏感词',
     dataIndex: 'word',
@@ -162,7 +209,7 @@ const columns = [
     title: '分类',
     dataIndex: 'category',
     slotName: 'category',
-    width: 150,
+    width: 50,
   },
   {
     title: '原因',
@@ -172,7 +219,7 @@ const columns = [
   {
     title: '操作',
     slotName: 'actions',
-    width: 150,
+    width: 100,
     fixed: 'right',
   },
 ];
@@ -421,6 +468,153 @@ onMounted(() => {
     text-overflow: ellipsis;
     white-space: nowrap;
     display: inline-block;
+  }
+}
+
+// 移动端筛选器
+.mobile-filters {
+  display: none;
+}
+
+// 移动端样式
+@media (max-width: 768px) {
+  .words-list-view {
+    padding: 0;
+    margin: 0;
+
+    :deep(.arco-card-header) {
+      padding: 12px 16px;
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    :deep(.arco-card-header-title) {
+      font-size: 16px;
+      flex: 0 0 auto;
+      min-width: fit-content;
+    }
+
+    :deep(.arco-card-body) {
+      padding: 12px;
+    }
+  }
+
+  .header-actions {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .actions-desktop {
+    display: none;
+  }
+
+  .mobile-filters {
+    display: block;
+    margin-bottom: 16px;
+
+    :deep(.arco-input),
+    :deep(.arco-select) {
+      width: 100% !important;
+    }
+  }
+
+  // 表格移动端优化
+  :deep(.arco-table) {
+    font-size: 12px;
+
+    .arco-table-th,
+    .arco-table-td {
+      padding: 6px 8px !important;
+    }
+  }
+
+  :deep(.arco-table-th) {
+    font-size: 12px;
+  }
+
+  :deep(.arco-tag) {
+    font-size: 11px;
+    padding: 1px 6px;
+  }
+
+  .word-tag {
+    max-width: 80px;
+    font-size: 11px;
+  }
+
+  // 按钮优化
+  :deep(.arco-button-text) {
+    padding: 0 4px;
+    font-size: 12px;
+  }
+
+  // 分页器优化
+  :deep(.arco-pagination) {
+    font-size: 12px;
+  }
+
+  :deep(.arco-pagination-item) {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  // 操作按钮优化
+  :deep(.arco-space-item) {
+    margin-right: 4px !important;
+  }
+}
+
+// 模态框移动端优化
+@media (max-width: 768px) {
+  .edit-modal {
+    :deep(.arco-modal) {
+      width: 95% !important;
+      margin: 0 auto;
+    }
+
+    :deep(.arco-modal-body) {
+      padding: 16px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    :deep(.arco-modal-header) {
+      padding: 16px;
+    }
+
+    :deep(.arco-modal-footer) {
+      padding: 12px 16px;
+    }
+
+    :deep(.arco-btn) {
+      flex: 1;
+    }
+  }
+}
+
+// 超小屏幕优化
+@media (max-width: 480px) {
+  .words-list-view {
+    :deep(.arco-card-header-title) {
+      font-size: 14px;
+    }
+  }
+
+  .word-tag {
+    max-width: 60px;
+  }
+
+  :deep(.arco-table) {
+    font-size: 11px;
+
+    .arco-table-th,
+    .arco-table-td {
+      padding: 4px 6px !important;
+    }
   }
 }
 </style>
