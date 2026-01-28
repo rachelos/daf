@@ -64,18 +64,26 @@
         <a-divider direction="vertical" />
 
         <div class="user-info">
-          <a-avatar :size="32">
-            <icon-user />
-          </a-avatar>
-          <span class="username">{{ userStore.userInfo?.username }}</span>
-          <a-button type="text" size="small" @click="showChangePasswordModal">
-            <icon-lock />
-            修改密码
-          </a-button>
-          <a-button type="text" size="small" @click="handleLogout">
-            <icon-export />
-            退出
-          </a-button>
+          <a-dropdown trigger="click">
+            <a-avatar :size="32" class="user-avatar">
+              <icon-user />
+            </a-avatar>
+            <template #content>
+              <a-doption @click="showChangePasswordModal">
+                <template #icon>
+                  <icon-lock />
+                </template>
+                修改密码
+              </a-doption>
+              <a-doption @click="handleLogout">
+                <template #icon>
+                  <icon-export />
+                </template>
+                退出
+              </a-doption>
+            </template>
+            <span class="username">{{ userStore.userInfo?.username }}</span>
+          </a-dropdown>
         </div>
       </div>
     </a-layout-header>
@@ -699,8 +707,18 @@ onUnmounted(() => {
 .user-info {
   display: flex;
   align-items: center;
-  cursor: pointer;
   gap: 8px;
+}
+
+.user-avatar {
+  cursor: pointer;
+  background: var(--color-fill-2);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    background: var(--color-fill-3);
+  }
 }
 
 .username {
@@ -784,8 +802,9 @@ onUnmounted(() => {
     display: none;
   }
 
-  .user-info a-button {
-    padding: 0 4px;
+  .user-info .arco-dropdown {
+    display: flex;
+    align-items: center;
   }
 
   .sider {
