@@ -63,7 +63,7 @@
               默认管理员账号: admin / admin123
             </a-alert>
             <a-alert v-if="showDefaultPassword" type="info" class="default-info">
-              默认词库管理员账号: word_manager / word123
+              系统词库管理员账号: word_manager / word123
             </a-alert>
           </a-form>
         </a-card>

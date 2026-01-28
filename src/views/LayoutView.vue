@@ -14,6 +14,17 @@
         </div>
 
         <div class="feature-status">
+          <div :class="['feature-tag', 'dictionary-status', config.dictionary?.load_default_words ? 'enabled' : 'disabled']" @click="toggleDictionary">
+            <template v-if="config.dictionary?.load_default_words">
+              <icon-book />
+              <span>系统词库已启用</span>
+            </template>
+            <template v-else>
+              <icon-book />
+              <span>系统词库未启用</span>
+            </template>
+          </div>
+
           <div :class="['feature-tag', 'ai-status', config.ai?.enabled ? 'enabled' : 'disabled']" @click="toggleAI">
             <template v-if="config.ai?.enabled">
               <icon-robot />
@@ -388,6 +399,39 @@ const toggleCascade = async () => {
   }
 };
 
+const toggleDictionary = async () => {
+  if (!config.value.dictionary) {
+    Message.warning('配置未加载，请稍候');
+    return;
+  }
+  
+  const newValue = !config.value.dictionary.load_default_words;
+  try {
+    // 创建更新的配置副本
+    const updateData = JSON.parse(JSON.stringify(config.value));
+    updateData.dictionary.load_default_words = newValue;
+    
+    // 更新配置
+    const updateResult = await configApi.update(updateData);
+    if (!updateResult.success) {
+      Message.error('更新配置失败: ' + (updateResult.message || '未知错误'));
+      return;
+    }
+    
+    // 重新加载配置
+    const reloadResult = await configApi.reloadConfig();
+    if (reloadResult.success) {
+      Message.success(newValue ? '系统词库已启用' : '系统词库已关闭');
+      // 重新获取配置以更新显示
+      await fetchConfig();
+    } else {
+      Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
+    }
+  } catch (error: any) {
+    Message.error('切换系统词库失败: ' + (error.message || '未知错误'));
+  }
+};
+
 onMounted(() => {
   checkHealth();
   fetchSystemTitle();
@@ -538,7 +582,8 @@ onMounted(() => {
   user-select: none;
 
   &.ai-status,
-  &.cascade-status {
+  &.cascade-status,
+  &.dictionary-status {
     svg {
       font-size: 14px;
     }

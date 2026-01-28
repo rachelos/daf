@@ -60,7 +60,7 @@
         <!-- 词库配置 -->
         <a-card title="词库配置" class="mb-4" :bordered="false">
           <a-descriptions v-if="!editMode" bordered>
-            <a-descriptions-item label="加载默认词库">
+            <a-descriptions-item label="加载系统词库">
               <a-tag :color="config.dictionary?.load_default_words ? 'green' : 'red'">
                 {{ config.dictionary?.load_default_words ? '是' : '否' }}
               </a-tag>
@@ -71,7 +71,7 @@
           <a-form v-else :model="editConfig" layout="vertical">
             <a-row :gutter="16">
               <a-col :span="8">
-                <a-form-item label="加载默认词库">
+                <a-form-item label="加载系统词库">
                   <a-switch v-model="editConfig.dictionary.load_default_words" />
                 </a-form-item>
               </a-col>
