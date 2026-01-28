@@ -349,6 +349,12 @@ onMounted(() => {
   padding: 20px;
 }
 
+@media (max-width: 768px) {
+  .logs-container {
+    padding: 12px;
+  }
+}
+
 .page-header {
   margin-bottom: 20px;
 }
@@ -358,9 +364,26 @@ onMounted(() => {
   color: var(--color-text-1);
 }
 
+@media (max-width: 768px) {
+  .page-header h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    width: 100%;
+  }
+  
+  .header-actions :deep(.arco-btn) {
+    flex: 1;
+  }
 }
 
 .stats-overview {
@@ -377,8 +400,57 @@ onMounted(() => {
   border-radius: 8px;
 }
 
+@media (max-width: 768px) {
+  .search-filters {
+    padding: 12px;
+  }
+}
+
+.search-filters :deep(.arco-form) {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 769px) {
+  .search-filters :deep(.arco-form) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 .search-filters :deep(.arco-form-item) {
   margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .search-filters :deep(.arco-form-item) {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .search-filters :deep(.arco-form-item) :deep(.arco-select) {
+    width: 100% !important;
+  }
+  
+  .search-filters :deep(.arco-form-item) :deep(.arco-input),
+  .search-filters :deep(.arco-form-item) :deep(.arco-picker) {
+    width: 100% !important;
+  }
+  
+  .search-filters :deep(.arco-range-picker) {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-filters :deep(.arco-form-item:last-child) {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .search-filters :deep(.arco-form-item:last-child) :deep(.arco-btn) {
+    flex: 1;
+  }
 }
 
 .charts-section {
@@ -394,6 +466,12 @@ onMounted(() => {
   max-width: 200px;
 }
 
+@media (max-width: 768px) {
+  .text-preview {
+    max-width: 150px;
+  }
+}
+
 .text-ellipsis {
   white-space: nowrap;
   overflow: hidden;
@@ -403,10 +481,38 @@ onMounted(() => {
 .logs-table :deep(.arco-table) {
   font-size: 13px;
 }
+
+@media (max-width: 768px) {
+  .logs-table :deep(.arco-table) {
+    font-size: 12px;
+  }
+}
+
 .logs-table :deep(.arco-table-td) {
   padding: 0px !important;
 }
+
+@media (max-width: 768px) {
+  .logs-table :deep(.arco-table-td) {
+    padding: 4px 8px !important;
+  }
+}
+
 .logs-table :deep(.arco-table-th) {
   padding: 10px 12px;
+}
+
+@media (max-width: 768px) {
+  .logs-table :deep(.arco-table-th) {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .logs-table :deep(.arco-tag) {
+    font-size: 11px;
+    padding: 0 4px;
+  }
 }
 </style>
