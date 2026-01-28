@@ -183,13 +183,13 @@
               </template>
               系统配置
             </a-menu-item>
-            <a-menu-item v-if="userStore.isAdmin" key="detection-logs">
+            <a-menu-item key="detection-logs">
               <template #icon>
                 <icon-file />
               </template>
               检测日志
             </a-menu-item>
-            <a-menu-item v-if="userStore.isAdmin" key="logs-analytics">
+            <a-menu-item key="logs-analytics">
               <template #icon>
                 <icon-bar-chart />
               </template>

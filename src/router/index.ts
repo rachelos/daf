@@ -80,13 +80,13 @@ const routes: RouteRecordRaw[] = [
         path: 'detection-logs',
         name: 'DetectionLogs',
         component: () => import('@/views/DetectionLogsView.vue'),
-        meta: { requiresAuth: true, requiresAdmin: true },
+        meta: { requiresAuth: true },
       },
       {
         path: 'logs-analytics',
         name: 'LogsAnalytics',
         component: () => import('@/views/LogsAnalyticsView.vue'),
-        meta: { requiresAuth: true, requiresAdmin: true },
+        meta: { requiresAuth: true },
       },
       {
         path: 'categories',
