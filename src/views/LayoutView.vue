@@ -438,8 +438,8 @@ const toggleDictionary = async () => {
         const reloadResult = await configApi.reloadConfig();
         if (reloadResult.success) {
           Message.success(newValue ? '系统词库已启用' : '系统词库已关闭');
-          // 重新获取配置以更新显示
-          await fetchConfig();
+          // 刷新页面
+          window.location.reload();
         } else {
           Message.error('重新加载配置失败: ' + (reloadResult.message || '未知错误'));
         }
