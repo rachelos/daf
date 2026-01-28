@@ -11,24 +11,24 @@
     </div>
 
     <div class="stats-overview">
-      <a-row :gutter="16">
-        <a-col :span="6">
+      <a-row :gutter="[12, 12]">
+        <a-col :span="12" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <a-statistic :title="'总请求数'" :value="stats.totalRequests" show-group-separator />
         </a-col>
-        <a-col :span="6">
+        <a-col :span="12" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <a-statistic :title="'敏感请求数'" :value="stats.sensitiveRequests" show-group-separator />
         </a-col>
-        <a-col :span="6">
+        <a-col :span="12" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <a-statistic :title="'敏感率'" :value="stats.sensitiveRate" :precision="2" suffix="%" />
         </a-col>
-        <a-col :span="6">
+        <a-col :span="12" :xs="12" :sm="12" :md="6" :lg="6" :xl="6">
           <a-statistic :title="'今日请求'" :value="stats.todayRequests" show-group-separator />
         </a-col>
       </a-row>
     </div>
 
     <div class="filter-section">
-      <a-form :model="filterForm" layout="inline">
+      <a-form :model="filterForm" :layout="isMobile ? 'vertical' : 'inline'">
         <a-form-item label="时间维度">
           <a-select v-model="timeDimension" style="width: 120px" @change="handleDimensionChange">
             <a-option value="hour">小时</a-option>
@@ -44,14 +44,14 @@
             show-time
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DDTHH:mm:ssZ"
-            style="width: 320px"
+            :style="{ width: isMobile ? '100%' : '320px' }"
           />
           <a-range-picker
             v-else-if="timeDimension === 'day'"
             v-model="dateRange"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DDTHH:mm:ssZ"
-            style="width: 320px"
+            :style="{ width: isMobile ? '100%' : '320px' }"
           />
           <a-range-picker
             v-else-if="timeDimension === 'month'"
@@ -59,7 +59,7 @@
             picker="month"
             format="YYYY-MM"
             value-format="YYYY-MM"
-            style="width: 320px"
+            :style="{ width: isMobile ? '100%' : '320px' }"
           />
           <a-range-picker
             v-else
@@ -67,7 +67,7 @@
             picker="year"
             format="YYYY"
             value-format="YYYY"
-            style="width: 320px"
+            :style="{ width: isMobile ? '100%' : '320px' }"
           />
         </a-form-item>
         <a-form-item>
@@ -79,7 +79,7 @@
 
     <div class="charts-section">
       <a-row :gutter="16">
-        <a-col :span="12">
+        <a-col :span="24" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
           <a-card title="分类统计" :bordered="false">
             <div class="chart-container">
               <v-chart v-if="categoryChartData.length > 0" :option="categoryChartOption" style="width: 100%; height: 350px;" autoresize />
@@ -87,7 +87,7 @@
             </div>
           </a-card>
         </a-col>
-        <a-col :span="12">
+        <a-col :span="24" :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
           <a-card :title="getTrendChartTitle()" :bordered="false">
             <div class="chart-container">
               <v-chart v-if="hourlyChartData.length > 0" :option="trendChartOption" style="width: 100%; height: 350px;" autoresize />
@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '@/stores/user';
 import { Message } from '@arco-design/web-vue';
 import { IconRefresh } from '@arco-design/web-vue/es/icon';
@@ -140,6 +140,7 @@ const stats = reactive<Stats>({
 const dateRange = ref<string[]>([]);
 const filterForm = reactive({});
 const timeDimension = ref<string>('hour');
+const isMobile = ref<boolean>(window.innerWidth < 768);
 
 const categoryChartData = ref<any[]>([]);
 const hourlyChartData = ref<any[]>([]);
@@ -361,6 +362,11 @@ const resetFilter = () => {
   loadStats();
 };
 
+// 监听窗口大小变化
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
 onMounted(() => {
   const now = new Date();
   let start: Date;
@@ -379,60 +385,126 @@ onMounted(() => {
 
   dateRange.value = [start.toISOString(), end.toISOString()];
 
+  window.addEventListener('resize', handleResize);
   loadData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 </script>
 
 <style scoped>
 .analytics-container {
-  padding: 20px;
+  padding: 12px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .page-header h2 {
   margin: 0;
   color: var(--color-text-1);
+  font-size: 18px;
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .stats-overview {
-  margin-bottom: 20px;
-  padding: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
   background: var(--color-bg-2);
   border-radius: 8px;
 }
 
 .filter-section {
-  margin-bottom: 20px;
-  padding: 20px;
+  margin-bottom: 16px;
+  padding: 12px;
   background: var(--color-bg-2);
   border-radius: 8px;
 }
 
 .charts-section {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 /* 图表容器样式 */
 .chart-container {
   width: 100%;
-  min-height: 350px;
+  min-height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .charts-section :deep(.arco-card-body) {
-  padding: 20px;
+  padding: 12px;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .analytics-container {
+    padding: 8px;
+  }
+
+  .page-header h2 {
+    font-size: 16px;
+  }
+
+  .stats-overview {
+    padding: 8px;
+  }
+
+  .filter-section {
+    padding: 8px;
+  }
+
+  .stats-overview :deep(.arco-statistic-title) {
+    font-size: 12px;
+  }
+
+  .stats-overview :deep(.arco-statistic-value) {
+    font-size: 20px;
+  }
+
+  .filter-section :deep(.arco-form-item-label-col) {
+    padding-bottom: 4px;
+  }
+
+  .chart-container {
+    min-height: 250px;
+  }
+
+  .charts-section :deep(.arco-card) {
+    margin-bottom: 12px;
+  }
+
+  .charts-section :deep(.arco-card:last-child) {
+    margin-bottom: 0;
+  }
+
+  .charts-section :deep(.arco-card-header) {
+    padding: 8px 12px;
+  }
+
+  .charts-section :deep(.arco-card-body) {
+    padding: 8px;
+  }
+}
+
+/* 平板端优化 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .analytics-container {
+    padding: 16px;
+  }
 }
 </style>
