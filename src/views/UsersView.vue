@@ -55,6 +55,18 @@
             </a-table-column>
           </template>
         </a-table>
+        <a-pagination
+          v-if="total > 0"
+          v-model:current="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          :show-total="true"
+          :show-jumper="true"
+          :show-page-size="true"
+          @change="handlePageChange"
+          @page-size-change="handlePageSizeChange"
+          class="pagination"
+        />
       </div>
 
       <!-- 移动端卡片显示 -->
@@ -102,6 +114,18 @@
               </div>
             </div>
           </div>
+          <a-pagination
+            v-if="total > 0"
+            v-model:current="currentPage"
+            v-model:page-size="pageSize"
+            :total="total"
+            :show-total="true"
+            :show-jumper="true"
+            :show-page-size="true"
+            @change="handlePageChange"
+            @page-size-change="handlePageSizeChange"
+            class="pagination"
+          />
         </a-spin>
       </div>
     </a-card>
@@ -168,6 +192,9 @@ const users = ref<User[]>([]);
 const loading = ref(false);
 const createModalVisible = ref(false);
 const editModalVisible = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
 const createForm = reactive({
   username: '',
@@ -187,9 +214,10 @@ const editingUserId = ref('');
 const loadUsers = async () => {
   loading.value = true;
   try {
-    const result = await usersApi.list();
+    const result = await usersApi.list({ page: currentPage.value, page_size: pageSize.value });
     if (result.success && result.data) {
-      users.value = result.data;
+      users.value = result.data.users || [];
+      total.value = result.data.total || 0;
     }
   } catch (error: any) {
     Message.error('加载用户列表失败: ' + (error.message || '未知错误'));
@@ -218,6 +246,7 @@ const handleCreate = async () => {
       Message.success('用户创建成功');
       createModalVisible.value = false;
       resetCreateForm();
+      currentPage.value = 1;
       loadUsers();
     } else {
       Message.error('创建失败: ' + (result.message || '未知错误'));
@@ -291,6 +320,10 @@ const handleDelete = (userId: string) => {
         const result = await usersApi.delete(userId);
         if (result.success) {
           Message.success('用户删除成功');
+          // 如果当前页只有一条数据且不是第一页，则回到上一页
+          if (users.value.length === 1 && currentPage.value > 1) {
+            currentPage.value -= 1;
+          }
           loadUsers();
         } else {
           Message.error('删除失败: ' + (result.message || '未知错误'));
@@ -300,6 +333,17 @@ const handleDelete = (userId: string) => {
       }
     },
   });
+};
+
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadUsers();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadUsers();
 };
 
 onMounted(() => {
@@ -355,6 +399,16 @@ onMounted(() => {
       border-radius: 4px;
       padding: 2px 8px;
     }
+
+    .pagination {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+
+      :deep(.arco-pagination) {
+        font-size: 14px;
+      }
+    }
   }
 
   // 移动端视图
@@ -405,6 +459,22 @@ onMounted(() => {
 
         :deep(.arco-btn) {
           border-radius: 6px;
+        }
+      }
+    }
+
+    .pagination {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+
+      :deep(.arco-pagination) {
+        font-size: 14px;
+
+        .arco-pagination-item,
+        .arco-pagination-jump-input,
+        .arco-pagination-total {
+          font-size: 13px;
         }
       }
     }

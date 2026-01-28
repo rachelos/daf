@@ -112,7 +112,8 @@ export const configApi = {
 };
 
 export const usersApi = {
-  list: () => api.get<any[]>('/users'),
+  list: (params?: { page?: number; page_size?: number }) =>
+    api.get<any>('/users', { params }),
   create: (data: { username: string; password: string; roles: string[]; is_active: boolean }) =>
     api.post('/users', data),
   delete: (userId: string) => api.delete(`/users/${userId}`),
