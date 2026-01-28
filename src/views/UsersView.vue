@@ -10,27 +10,78 @@
         </a-button>
       </template>
 
-      <a-table :data="users" :loading="loading" :pagination="false">
-        <template #columns>
-          <a-table-column title="用户名" data-index="username" />
-          <a-table-column title="角色" data-index="roles">
-            <template #cell="{ record }">
-              <a-tag v-for="role in record.roles" :key="role" color="green">
-                {{ role }}
-              </a-tag>
-            </template>
-          </a-table-column>
-          <a-table-column title="状态" data-index="is_active">
-            <template #cell="{ record }">
-              <a-tag :color="record.is_active ? 'green' : 'red'">
-                {{ record.is_active ? '激活' : '禁用' }}
-              </a-tag>
-            </template>
-          </a-table-column>
-          <a-table-column title="操作">
-            <template #cell="{ record }">
-              <a-space>
-                <a-button type="text" size="small" @click="handleEdit(record)">
+      <!-- PC端表格显示 -->
+      <div class="desktop-view">
+        <a-table :data="users" :loading="loading" :pagination="false">
+          <template #columns>
+            <a-table-column title="用户名" data-index="username" />
+            <a-table-column title="角色" data-index="roles">
+              <template #cell="{ record }">
+                <a-tag v-for="role in record.roles" :key="role" color="green">
+                  {{ role }}
+                </a-tag>
+              </template>
+            </a-table-column>
+            <a-table-column title="状态" data-index="is_active">
+              <template #cell="{ record }">
+                <a-tag :color="record.is_active ? 'green' : 'red'">
+                  {{ record.is_active ? '激活' : '禁用' }}
+                </a-tag>
+              </template>
+            </a-table-column>
+            <a-table-column title="操作">
+              <template #cell="{ record }">
+                <a-space>
+                  <a-button type="text" size="small" @click="handleEdit(record)">
+                    <template #icon>
+                      <icon-edit />
+                    </template>
+                    编辑
+                  </a-button>
+                  <a-button
+                    v-if="record.username !== 'admin'"
+                    type="text"
+                    size="small"
+                    status="danger"
+                    @click="handleDelete(record.id)"
+                  >
+                    <template #icon>
+                      <icon-delete />
+                    </template>
+                    删除
+                  </a-button>
+                </a-space>
+              </template>
+            </a-table-column>
+          </template>
+        </a-table>
+      </div>
+
+      <!-- 移动端卡片显示 -->
+      <div class="mobile-view">
+        <a-empty v-if="!loading && users.length === 0" description="暂无用户数据" />
+        <a-spin :loading="loading" style="width: 100%">
+          <div class="user-cards">
+            <div v-for="record in users" :key="record.id" class="user-card">
+              <a-descriptions :column="1" bordered>
+                <a-descriptions-item label="用户名">
+                  {{ record.username }}
+                </a-descriptions-item>
+                <a-descriptions-item label="角色">
+                  <a-space wrap>
+                    <a-tag v-for="role in record.roles" :key="role" color="green">
+                      {{ role }}
+                    </a-tag>
+                  </a-space>
+                </a-descriptions-item>
+                <a-descriptions-item label="状态">
+                  <a-tag :color="record.is_active ? 'green' : 'red'">
+                    {{ record.is_active ? '激活' : '禁用' }}
+                  </a-tag>
+                </a-descriptions-item>
+              </a-descriptions>
+              <div class="user-actions">
+                <a-button type="primary" size="small" @click="handleEdit(record)">
                   <template #icon>
                     <icon-edit />
                   </template>
@@ -38,9 +89,9 @@
                 </a-button>
                 <a-button
                   v-if="record.username !== 'admin'"
-                  type="text"
-                  size="small"
+                  type="primary"
                   status="danger"
+                  size="small"
                   @click="handleDelete(record.id)"
                 >
                   <template #icon>
@@ -48,11 +99,11 @@
                   </template>
                   删除
                 </a-button>
-              </a-space>
-            </template>
-          </a-table-column>
-        </template>
-      </a-table>
+              </div>
+            </div>
+          </div>
+        </a-spin>
+      </div>
     </a-card>
 
     <!-- 创建用户弹窗 -->
@@ -273,34 +324,105 @@ onMounted(() => {
     padding: 20px;
   }
 
-  :deep(.arco-table) {
-    border-radius: 6px;
+  // 桌面端视图
+  .desktop-view {
+    :deep(.arco-table) {
+      border-radius: 6px;
+    }
+
+    :deep(.arco-table-th) {
+      background: #f7f8fa;
+      font-weight: 500;
+    }
+
+    :deep(.arco-table-tr:hover) {
+      background: rgba(22, 93, 255, 0.03);
+    }
+
+    :deep(.arco-btn-primary) {
+      background: #165DFF;
+      border-color: #165DFF;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    :deep(.arco-btn-primary:hover) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
+    }
+
+    :deep(.arco-tag) {
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
   }
 
-  :deep(.arco-table-th) {
-    background: #f7f8fa;
-    font-weight: 500;
+  // 移动端视图
+  .mobile-view {
+    display: none;
+
+    .user-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .user-card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      :deep(.arco-descriptions) {
+        margin-bottom: 0;
+
+        .arco-descriptions-table {
+          width: 100%;
+        }
+
+        .arco-descriptions-item-label {
+          width: 80px;
+          background: #f7f8fa;
+          font-weight: 500;
+        }
+
+        .arco-descriptions-item-value {
+          color: #333;
+        }
+      }
+
+      .user-actions {
+        padding: 12px 16px;
+        border-top: 1px solid #f0f0f0;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+
+        :deep(.arco-btn) {
+          border-radius: 6px;
+        }
+      }
+    }
   }
 
-  :deep(.arco-table-tr:hover) {
-    background: rgba(22, 93, 255, 0.03);
-  }
+  // 响应式媒体查询
+  @media (max-width: 768px) {
+    .desktop-view {
+      display: none;
+    }
 
-  :deep(.arco-btn-primary) {
-    background: #165DFF;
-    border-color: #165DFF;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-  }
+    .mobile-view {
+      display: block;
+    }
 
-  :deep(.arco-btn-primary:hover) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
-  }
-
-  :deep(.arco-tag) {
-    border-radius: 4px;
-    padding: 2px 8px;
+    :deep(.arco-card-body) {
+      padding: 12px;
+    }
   }
 }
 </style>
