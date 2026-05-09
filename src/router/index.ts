@@ -100,6 +100,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/ConfigView.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: 'webscan',
+        name: 'WebScan',
+        component: () => import('@/views/WebScanView.vue'),
+        meta: { requiresAuth: true },
+      },
     ],
   },
   {

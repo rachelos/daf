@@ -43,6 +43,9 @@
         <a-form-item label="关键词">
           <a-input v-model="searchForm.keyword" placeholder="搜索文本内容" style="width: 200px" allow-clear />
         </a-form-item>
+        <a-form-item v-if="userStore.isAdmin" label="AK用户">
+          <a-input v-model="searchForm.access_key_id" placeholder="AccessKey ID" style="width: 200px" allow-clear />
+        </a-form-item>
         <a-form-item>
           <a-button type="primary" @click="handleSearch">查询</a-button>
           <a-button @click="resetSearch" style="margin-left: 8px">重置</a-button>
@@ -140,6 +143,7 @@ const searchForm = reactive({
   category: '',
   has_sensitive: undefined as boolean | undefined,
   keyword: '',
+  access_key_id: '',
 });
 
 const pagination = reactive({
@@ -226,6 +230,10 @@ const loadLogs = async () => {
       params.append('keyword', searchForm.keyword);
     }
 
+    if (userStore.isAdmin && searchForm.access_key_id) {
+      params.append('access_key_id', searchForm.access_key_id);
+    }
+
     const response = await fetch(`/api/v1/logs?${params}`, {
       headers: {
         Authorization: `Bearer ${userStore.token}`,
@@ -258,6 +266,7 @@ const resetSearch = () => {
   searchForm.category = '';
   searchForm.has_sensitive = undefined;
   searchForm.keyword = '';
+  searchForm.access_key_id = '';
   pagination.current = 1;
   loadLogs();
 };

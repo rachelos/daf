@@ -133,6 +133,12 @@
               </template>
               文本过滤
             </a-menu-item>
+            <a-menu-item key="webscan">
+              <template #icon>
+                <icon-storage />
+              </template>
+              网站扫描
+            </a-menu-item>
             <!-- <a-menu-item key="correction">
               <template #icon>
                 <icon-thunderbolt />
