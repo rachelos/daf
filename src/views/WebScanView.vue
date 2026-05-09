@@ -124,7 +124,7 @@
               </a-table-column>
               <a-table-column title="进度" data-index="progress" :width="150">
                 <template #cell="{ record }">
-                  <a-progress :percent="record.progress" :status="getProgressStatus(record.status)" />
+                  <a-progress :percent="record.progress/100" :status="getProgressStatus(record.status)" />
                 </template>
               </a-table-column>
               <a-table-column title="创建时间" data-index="created_at" :width="180">
@@ -303,6 +303,9 @@
           </a-button>
           <a-button @click="handleExportReport('markdown')">
             导出Markdown
+          </a-button>
+          <a-button @click="handleExportReport('excel')">
+            导出Excel
           </a-button>
         </a-space>
       </div>

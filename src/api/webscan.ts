@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { api } from './index';
 
 export interface ScanConfig {
   target_url: string;
@@ -131,30 +131,30 @@ export interface ScanReport {
 
 // 创建扫描任务
 export const createScanTask = async (config: ScanConfig): Promise<ScanTask> => {
-  const response = await axios.post('/api/v1/webscan/tasks', config);
+  const response = await api.post<ScanTask>('/webscan/tasks', config);
   return response.data;
 };
 
 // 获取任务列表
 export const getScanTasks = async (): Promise<ScanTask[]> => {
-  const response = await axios.get('/api/v1/webscan/tasks');
+  const response = await api.get<ScanTask[]>('/webscan/tasks');
   return response.data;
 };
 
 // 获取任务详情
 export const getScanTask = async (taskId: string): Promise<ScanTask> => {
-  const response = await axios.get(`/api/v1/webscan/tasks/${taskId}`);
+  const response = await api.get<ScanTask>(`/webscan/tasks/${taskId}`);
   return response.data;
 };
 
 // 启动扫描
 export const startScanTask = async (taskId: string): Promise<void> => {
-  await axios.post(`/api/v1/webscan/tasks/${taskId}/start`);
+  await api.post(`/webscan/tasks/${taskId}/start`);
 };
 
 // 取消扫描
 export const cancelScanTask = async (taskId: string): Promise<void> => {
-  await axios.post(`/api/v1/webscan/tasks/${taskId}/cancel`);
+  await api.post(`/webscan/tasks/${taskId}/cancel`);
 };
 
 // 获取扫描进度
@@ -163,13 +163,17 @@ export const getScanProgress = async (taskId: string): Promise<{
   status: string;
   progress: number;
 }> => {
-  const response = await axios.get(`/api/v1/webscan/tasks/${taskId}/progress`);
+  const response = await api.get<{
+    task_id: string;
+    status: string;
+    progress: number;
+  }>(`/webscan/tasks/${taskId}/progress`);
   return response.data;
 };
 
 // 获取扫描报告
 export const getScanReport = async (taskId: string): Promise<ScanReport> => {
-  const response = await axios.get(`/api/v1/webscan/tasks/${taskId}/report`);
+  const response = await api.get<ScanReport>(`/webscan/tasks/${taskId}/report`);
   return response.data;
 };
 
@@ -178,14 +182,17 @@ export const exportScanReport = async (
   taskId: string,
   format: 'json' | 'html' | 'markdown' = 'json'
 ): Promise<Blob> => {
-  const response = await axios.get(`/api/v1/webscan/tasks/${taskId}/report/export`, {
-    params: { format },
-    responseType: 'blob',
+  // 对于文件下载，需要直接使用 axios，但仍然需要添加认证头
+  const token = localStorage.getItem('auth_token');
+  const response = await fetch(`/api/v1/webscan/tasks/${taskId}/report/export?format=${format}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
   });
-  return response.data;
+  return response.blob();
 };
 
 // 删除任务
 export const deleteScanTask = async (taskId: string): Promise<void> => {
-  await axios.delete(`/api/v1/webscan/tasks/${taskId}`);
+  await api.delete(`/webscan/tasks/${taskId}`);
 };
