@@ -311,21 +311,52 @@
 
         <!-- 导出按钮 -->
         <a-divider />
-        <a-space>
-          <a-button @click="handleExportReport('json')">
-            导出JSON
-          </a-button>
-          <a-button @click="handleExportReport('html')">
-            导出HTML
-          </a-button>
-          <a-button @click="handleExportReport('markdown')">
-            导出Markdown
-          </a-button>
-          <a-button @click="handleExportReport('excel')">
-            导出Excel
-          </a-button>
+        <a-space direction="vertical" style="width: 100%">
+          <a-typography-title :heading="6">导出报告</a-typography-title>
+          
+          <!-- 导出选项 -->
+          <a-form layout="inline">
+            <a-form-item label="导出内容">
+              <a-checkbox-group v-model="exportOptions.content">
+                <a-checkbox value="sensitive">敏感词</a-checkbox>
+                <a-checkbox value="broken_links">死链</a-checkbox>
+                <a-checkbox value="resources">资源错误</a-checkbox>
+                <a-checkbox value="http_errors">HTTP错误</a-checkbox>
+              </a-checkbox-group>
+            </a-form-item>
+          </a-form>
+          
+          <a-space>
+            <a-button type="primary" @click="handlePreviewReport">
+              <template #icon><icon-eye /></template>
+              预览HTML报告
+            </a-button>
+            <a-button @click="handleExportReport('json')">
+              导出JSON
+            </a-button>
+            <a-button @click="handleExportReport('html')">
+              导出HTML
+            </a-button>
+            <a-button @click="handleExportReport('markdown')">
+              导出Markdown
+            </a-button>
+            <a-button @click="handleExportReport('excel')">
+              导出Excel
+            </a-button>
+          </a-space>
         </a-space>
       </div>
+    </a-modal>
+    
+    <!-- HTML预览模态框 -->
+    <a-modal
+      v-model:visible="previewVisible"
+      title="HTML报告预览"
+      :width="1200"
+      :footer="false"
+      unmount-on-close
+    >
+      <div class="html-preview" v-html="previewHtml"></div>
     </a-modal>
   </div>
 </template>
@@ -369,7 +400,14 @@ const report = ref<ScanReport | null>(null);
 const loading = ref(false);
 const creating = ref(false);
 const reportVisible = ref(false);
+const previewVisible = ref(false);
+const previewHtml = ref('');
 const currentTaskId = ref('');
+
+// 导出选项
+const exportOptions = ref({
+  content: ['sensitive', 'broken_links', 'resources', 'http_errors']
+});
 
 // 加载任务列表
 const loadTasks = async () => {
