@@ -6,6 +6,5 @@ git commit -m "update"
 
 @REM 参数 -p 表示推送代码到远程仓库
 if "%~1"=="-p" (
-git remote add origin
 git push -u origin main
 )
