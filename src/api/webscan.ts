@@ -11,6 +11,8 @@ export interface ScanConfig {
   enable_tech_errors?: boolean;
   enable_security?: boolean;
   enable_compliance?: boolean;
+  enable_cascade?: boolean;      // 级联检测
+  enable_ai?: boolean;           // AI检测
   exclude_patterns?: string[];
   include_patterns?: string[];
   follow_redirects?: boolean;

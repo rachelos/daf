@@ -75,6 +75,23 @@
               </a-space>
             </a-form-item>
 
+            <a-form-item label="高级检测选项">
+              <a-space>
+                <a-checkbox v-model="scanConfig.enable_cascade" :disabled="!scanConfig.enable_sensitive">
+                  级联检测
+                  <a-tooltip content="检测拼音、同音字、形近字、异体字等变形词（需在系统配置中启用）">
+                    <icon-question-circle />
+                  </a-tooltip>
+                </a-checkbox>
+                <a-checkbox v-model="scanConfig.enable_ai" :disabled="!scanConfig.enable_sensitive">
+                  AI检测
+                  <a-tooltip content="使用AI模型进行语义级别的敏感内容检测">
+                    <icon-question-circle />
+                  </a-tooltip>
+                </a-checkbox>
+              </a-space>
+            </a-form-item>
+
             <a-form-item label="排除URL模式">
               <a-input-tag
                 v-model="scanConfig.exclude_patterns"
@@ -339,6 +356,8 @@ const scanConfig = ref<ScanConfig>({
   enable_tech_errors: true,
   enable_security: true,
   enable_compliance: true,
+  enable_cascade: false,  // 级联检测默认关闭
+  enable_ai: false,       // AI检测默认关闭
   exclude_patterns: [],
   include_patterns: [],
   follow_redirects: true,
@@ -373,6 +392,13 @@ const handleCreateTask = async () => {
 
   creating.value = true;
   try {
+    // 调试日志：显示发送的配置
+    console.log('[WebScan] Creating task with config:', {
+      enable_cascade: scanConfig.value.enable_cascade,
+      enable_ai: scanConfig.value.enable_ai,
+      enable_sensitive: scanConfig.value.enable_sensitive
+    });
+    
     const task = await createScanTask(scanConfig.value);
     Message.success('任务创建成功');
     await loadTasks();
