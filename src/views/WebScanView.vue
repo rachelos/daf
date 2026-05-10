@@ -465,13 +465,15 @@ const handleViewReport = async (taskId: string) => {
 };
 
 // 导出报告
-const handleExportReport = async (format: 'json' | 'html' | 'markdown') => {
+const handleExportReport = async (format: 'json' | 'html' | 'markdown' | 'excel') => {
   try {
     const blob = await exportScanReport(currentTaskId.value, format);
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `webscan-report-${currentTaskId.value}.${format}`;
+    // 根据格式设置正确的文件后缀
+    const extension = format === 'excel' ? 'xlsx' : format;
+    a.download = `webscan-report-${currentTaskId.value}.${extension}`;
     a.click();
     window.URL.revokeObjectURL(url);
   } catch (error) {
