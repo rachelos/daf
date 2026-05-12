@@ -313,50 +313,106 @@
         <a-divider />
         <a-space direction="vertical" style="width: 100%">
           <a-typography-title :heading="6">导出报告</a-typography-title>
-          
-          <!-- 导出选项 -->
-          <a-form layout="inline">
-            <a-form-item label="导出内容">
-              <a-checkbox-group v-model="exportOptions.content">
-                <a-checkbox value="sensitive">敏感词</a-checkbox>
-                <a-checkbox value="broken_links">死链</a-checkbox>
-                <a-checkbox value="resources">资源错误</a-checkbox>
-                <a-checkbox value="http_errors">HTTP错误</a-checkbox>
-              </a-checkbox-group>
-            </a-form-item>
-          </a-form>
-          
-          <a-space>
-            <a-button type="primary" @click="handlePreviewReport">
-              <template #icon><icon-eye /></template>
-              预览HTML报告
-            </a-button>
-            <a-button @click="handleExportReport('json')">
-              导出JSON
-            </a-button>
-            <a-button @click="handleExportReport('html')">
-              导出HTML
-            </a-button>
-            <a-button @click="handleExportReport('markdown')">
-              导出Markdown
-            </a-button>
-            <a-button @click="handleExportReport('excel')">
-              导出Excel
-            </a-button>
-          </a-space>
+          <a-button type="primary" @click="handlePreviewReport">
+            <template #icon><icon-edit /></template>
+            编辑并导出报告
+          </a-button>
         </a-space>
       </div>
     </a-modal>
     
-    <!-- HTML预览模态框 -->
+    <!-- 报告编辑预览模态框 -->
     <a-modal
       v-model:visible="previewVisible"
-      title="HTML报告预览"
-      :width="1200"
-      :footer="false"
+      title="编辑并导出报告"
+      :width="1400"
+      :footer="true"
       unmount-on-close
     >
-      <div class="html-preview" v-html="previewHtml"></div>
+      <a-space direction="vertical" style="width: 100%">
+        <a-alert type="info">
+          可以删除不需要的项目，或修改建议内容。导出时只包含列表中的项目。
+        </a-alert>
+        
+        <a-divider />
+        
+        <!-- 错误列表 -->
+        <a-list
+          :data="editableErrors"
+          :virtual-list-props="{ height: 500 }"
+          bordered
+        >
+          <template #item="{ item, index }">
+            <a-list-item>
+              <a-list-item-meta>
+                <template #avatar>
+                  <a-tag :color="getErrorSeverityColor(item.severity)">
+                    {{ item.severity }}
+                  </a-tag>
+                </template>
+                <template #title>
+                  <a-space>
+                    <a-tag>{{ item.type }}</a-tag>
+                    <span>{{ item.title }}</span>
+                  </a-space>
+                </template>
+                <template #description>
+                  <a-space direction="vertical" style="width: 100%">
+                    <div>{{ item.description }}</div>
+                    <div><strong>位置:</strong> {{ item.location }}</div>
+                    <div><strong>证据:</strong> {{ item.evidence }}</div>
+                    <a-input
+                      v-model="item.suggestion"
+                      placeholder="修改建议"
+                      style="margin-top: 8px"
+                    >
+                      <template #prepend>建议:</template>
+                    </a-input>
+                  </a-space>
+                </template>
+              </a-list-item-meta>
+              <template #actions>
+                <a-button 
+                  type="text" 
+                  status="danger"
+                  @click="handleRemoveError(index)"
+                >
+                  <template #icon><icon-delete /></template>
+                  删除
+                </a-button>
+              </template>
+            </a-list-item>
+          </template>
+        </a-list>
+        
+        <a-divider />
+        
+        <a-space>
+          <a-statistic title="总项目数" :value="editableErrors.length" />
+          <a-statistic title="敏感词" :value="getErrorCountByType('sensitive')" />
+          <a-statistic title="死链" :value="getErrorCountByType('broken_link')" />
+          <a-statistic title="资源错误" :value="getErrorCountByType('resource')" />
+          <a-statistic title="HTTP错误" :value="getErrorCountByType('http_error')" />
+        </a-space>
+      </a-space>
+      
+      <template #footer>
+        <a-space>
+          <a-button @click="previewVisible = false">取消</a-button>
+          <a-button type="outline" @click="handleExportEdited('json')">
+            导出JSON
+          </a-button>
+          <a-button type="outline" @click="handleExportEdited('html')">
+            导出HTML
+          </a-button>
+          <a-button type="outline" @click="handleExportEdited('markdown')">
+            导出Markdown
+          </a-button>
+          <a-button type="primary" @click="handleExportEdited('excel')">
+            导出Excel
+          </a-button>
+        </a-space>
+      </template>
     </a-modal>
   </div>
 </template>
@@ -401,13 +457,20 @@ const loading = ref(false);
 const creating = ref(false);
 const reportVisible = ref(false);
 const previewVisible = ref(false);
-const previewHtml = ref('');
 const currentTaskId = ref('');
 
-// 导出选项
-const exportOptions = ref({
-  content: ['sensitive', 'broken_links', 'resources', 'http_errors']
-});
+// 可编辑的错误列表
+interface EditableError {
+  type: string;
+  severity: string;
+  title: string;
+  description: string;
+  location: string;
+  evidence: string;
+  suggestion: string;
+}
+
+const editableErrors = ref<EditableError[]>([]);
 
 // 加载任务列表
 const loadTasks = async () => {
@@ -502,18 +565,82 @@ const handleViewReport = async (taskId: string) => {
   }
 };
 
-// 导出报告
-const handleExportReport = async (format: 'json' | 'html' | 'markdown' | 'excel') => {
+// 预览并编辑报告
+const handlePreviewReport = async () => {
   try {
-    const blob = await exportScanReport(currentTaskId.value, format);
+    // 获取完整报告
+    const reportData = await getScanReport(currentTaskId.value);
+    
+    // 提取所有错误到可编辑列表
+    const errors: EditableError[] = [];
+    for (const page of reportData.pages) {
+      for (const err of page.errors) {
+        errors.push({
+          type: err.type,
+          severity: err.severity,
+          title: err.title,
+          description: err.description,
+          location: err.location,
+          evidence: err.evidence,
+          suggestion: err.suggestion
+        });
+      }
+    }
+    
+    editableErrors.value = errors;
+    previewVisible.value = true;
+  } catch (error) {
+    Message.error('加载报告失败');
+  }
+};
+
+// 删除错误项
+const handleRemoveError = (index: number) => {
+  editableErrors.value.splice(index, 1);
+  Message.success('已删除');
+};
+
+// 获取错误数量（按类型）
+const getErrorCountByType = (type: string) => {
+  return editableErrors.value.filter(e => e.type === type).length;
+};
+
+// 获取错误严重程度颜色
+const getErrorSeverityColor = (severity: string) => {
+  const colors: Record<string, string> = {
+    critical: 'red',
+    high: 'orangered',
+    medium: 'orange',
+    low: 'gold',
+    info: 'blue'
+  };
+  return colors[severity] || 'gray';
+};
+
+// 导出编辑后的报告
+const handleExportEdited = async (format: 'json' | 'html' | 'markdown' | 'excel') => {
+  try {
+    // 调用新的API导出编辑后的报告
+    const response = await fetch(`/api/v1/webscan/tasks/${currentTaskId.value}/report/export-edited?format=${format}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+      },
+      body: JSON.stringify({
+        errors: editableErrors.value
+      })
+    });
+    
+    const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    // 根据格式设置正确的文件后缀
     const extension = format === 'excel' ? 'xlsx' : format;
     a.download = `webscan-report-${currentTaskId.value}.${extension}`;
     a.click();
     window.URL.revokeObjectURL(url);
+    Message.success('导出成功');
   } catch (error) {
     Message.error('导出报告失败');
   }
@@ -613,5 +740,42 @@ onMounted(() => {
 .report-content {
   max-height: 70vh;
   overflow-y: auto;
+}
+
+.html-preview {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 20px;
+  background: #fff;
+
+  :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  :deep(th),
+  :deep(td) {
+    border: 1px solid #e5e6eb;
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  :deep(th) {
+    background: #f7f8fa;
+    font-weight: 600;
+  }
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3) {
+    margin: 20px 0 10px 0;
+  }
+
+  :deep(ul),
+  :deep(ol) {
+    padding-left: 20px;
+    margin: 10px 0;
+  }
 }
 </style>

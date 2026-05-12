@@ -182,11 +182,18 @@ export const getScanReport = async (taskId: string): Promise<ScanReport> => {
 // 导出报告
 export const exportScanReport = async (
   taskId: string,
-  format: 'json' | 'html' | 'markdown' = 'json'
+  format: 'json' | 'html' | 'markdown' | 'excel' = 'json',
+  filters?: string[]
 ): Promise<Blob> => {
   // 对于文件下载，需要直接使用 axios，但仍然需要添加认证头
   const token = localStorage.getItem('auth_token');
-  const response = await fetch(`/api/v1/webscan/tasks/${taskId}/report/export?format=${format}`, {
+  
+  let url = `/api/v1/webscan/tasks/${taskId}/report/export?format=${format}`;
+  if (filters && filters.length > 0) {
+    url += `&filter=${filters.join(',')}`;
+  }
+  
+  const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`
     }
