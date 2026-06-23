@@ -1,7 +1,8 @@
 import { api } from './index';
 
 export interface ScanConfig {
-  target_url: string;
+  target_url?: string;
+  target_urls?: string[];  // 批量创建：多个目标URL
   max_depth?: number;
   max_pages?: number;
   timeout?: number;
@@ -131,9 +132,9 @@ export interface ScanReport {
   compliance_summary?: ComplianceSummary;
 }
 
-// 创建扫描任务
-export const createScanTask = async (config: ScanConfig): Promise<ScanTask> => {
-  const response = await api.post<ScanTask>('/webscan/tasks', config);
+// 创建扫描任务（支持批量创建）
+export const createScanTask = async (config: ScanConfig): Promise<ScanTask | ScanTask[]> => {
+  const response = await api.post<ScanTask | ScanTask[]>('/webscan/tasks', config);
   return response.data;
 };
 
@@ -204,4 +205,32 @@ export const exportScanReport = async (
 // 删除任务
 export const deleteScanTask = async (taskId: string): Promise<void> => {
   await api.delete(`/webscan/tasks/${taskId}`);
+};
+
+// 批量导出报告
+export const batchExportReports = async (
+  taskIds: string[],
+  format: 'json' | 'html' | 'markdown' | 'excel' = 'excel',
+  filters?: string[]
+): Promise<Blob> => {
+  const token = localStorage.getItem('auth_token');
+  
+  const response = await fetch('/api/v1/webscan/tasks/batch-export', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      task_ids: taskIds,
+      format: format,
+      filters: filters || []
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error('批量导出失败');
+  }
+  
+  return response.blob();
 };

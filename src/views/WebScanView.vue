@@ -5,11 +5,22 @@
         <a-card title="网站扫描配置" :bordered="false">
           <a-form :model="scanConfig" layout="vertical">
             <a-form-item label="目标网站URL" required>
-              <a-input
-                v-model="scanConfig.target_url"
-                placeholder="https://example.com"
+              <a-textarea
+                v-model="scanConfig.target_urls_text"
+                placeholder="输入网站URL，每行一个&#10;例如：&#10;https://example1.com&#10;https://example2.com&#10;https://example3.com"
+                :auto-size="{ minRows: 3, maxRows: 10 }"
                 allow-clear
               />
+              <template #extra>
+                <a-space>
+                  <a-typography-text type="secondary">
+                    支持批量输入，每行一个URL
+                  </a-typography-text>
+                  <a-typography-text type="secondary" v-if="urlCount > 0">
+                    已输入 {{ urlCount }} 个URL
+                  </a-typography-text>
+                </a-space>
+              </template>
             </a-form-item>
 
             <a-row :gutter="16">
@@ -116,15 +127,45 @@
       <a-tab-pane key="tasks" title="扫描任务">
         <a-card :bordered="false">
           <template #extra>
-            <a-button @click="loadTasks">
-              <template #icon>
-                <icon-refresh />
-              </template>
-              刷新
-            </a-button>
+            <a-space>
+              <a-button 
+                type="primary" 
+                :disabled="selectedTaskIds.length === 0"
+                @click="showBatchExportModal"
+              >
+                <template #icon>
+                  <icon-download />
+                </template>
+                批量导出{{ selectedTaskIds.length > 0 ? ` (${selectedTaskIds.length})` : '' }}
+              </a-button>
+              <a-button 
+                :disabled="tasks.length === 0"
+                @click="handleInvertSelection"
+              >
+                <template #icon>
+                  <icon-swap />
+                </template>
+                反选
+              </a-button>
+              <a-button @click="loadTasks">
+                <template #icon>
+                  <icon-refresh />
+                </template>
+                刷新
+              </a-button>
+            </a-space>
           </template>
 
-          <a-table :data="tasks" :loading="loading" :pagination="false">
+          <a-table 
+            :data="tasks" 
+            :loading="loading" 
+            :pagination="false"
+            row-key="id"
+            :row-selection="rowSelection"
+            :selected-keys="selectedTaskIds"
+            @select="handleSelect"
+            @select-all="handleSelectAll"
+          >
             <template #columns>
               <a-table-column title="任务ID" data-index="id" :width="280">
                 <template #cell="{ record }">
@@ -414,11 +455,72 @@
         </a-space>
       </template>
     </a-modal>
+
+    <!-- 批量导出对话框 -->
+    <a-modal
+      v-model:visible="batchExportVisible"
+      title="批量导出报告"
+      :width="600"
+      @ok="handleBatchExport"
+      @cancel="batchExportVisible = false"
+    >
+      <a-form :model="batchExportConfig" layout="vertical">
+        <a-form-item label="导出格式">
+          <a-radio-group v-model="batchExportConfig.format">
+            <a-radio value="json">JSON</a-radio>
+            <a-radio value="html">HTML</a-radio>
+            <a-radio value="markdown">Markdown</a-radio>
+            <a-radio value="excel">Excel</a-radio>
+          </a-radio-group>
+        </a-form-item>
+        
+        <a-form-item label="过滤条件（可选）">
+          <a-checkbox-group v-model="batchExportConfig.filters">
+            <a-checkbox value="sensitive">敏感词</a-checkbox>
+            <a-checkbox value="http_error">HTTP错误</a-checkbox>
+            <a-checkbox value="broken_link">死链</a-checkbox>
+            <a-checkbox value="resource">资源错误</a-checkbox>
+            <a-checkbox value="security">安全问题</a-checkbox>
+            <a-checkbox value="compliance">合规问题</a-checkbox>
+          </a-checkbox-group>
+          <template #extra>
+            <a-typography-text type="secondary">
+              不选择任何过滤条件则导出所有内容
+            </a-typography-text>
+          </template>
+        </a-form-item>
+
+        <a-form-item label="已选择任务">
+          <a-space direction="vertical" fill>
+            <a-typography-text>
+              共选择 <a-tag color="blue">{{ selectedTaskIds.length }}</a-tag> 个任务
+            </a-typography-text>
+            <a-typography-text type="secondary" v-if="selectedTaskIds.length > 0">
+              (任务列表总数: {{ tasks.length }})
+            </a-typography-text>
+            <a-divider style="margin: 8px 0" />
+            <div style="max-height: 200px; overflow-y: auto;">
+              <a-space direction="vertical" fill>
+                <a-tag 
+                  v-for="taskId in selectedTaskIds" 
+                  :key="taskId" 
+                  closable
+                  @close="removeSelectedTask(taskId)"
+                  style="margin: 2px;"
+                >
+                  {{ taskId }}
+                </a-tag>
+              </a-space>
+            </div>
+          </a-space>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Message } from '@arco-design/web-vue';
 import {
   createScanTask,
@@ -428,13 +530,15 @@ import {
   getScanReport,
   exportScanReport,
   deleteScanTask,
+  batchExportReports,
   type ScanConfig,
   type ScanTask,
   type ScanReport,
 } from '@/api/webscan';
 
-const scanConfig = ref<ScanConfig>({
+const scanConfig = ref<ScanConfig & { target_urls_text: string }>({
   target_url: '',
+  target_urls_text: '',  // 用于多行文本输入
   max_depth: 3,
   max_pages: 100,
   timeout: 30,
@@ -451,6 +555,27 @@ const scanConfig = ref<ScanConfig>({
   max_redirects: 10,
 });
 
+// 计算URL数量
+const urlCount = ref(0);
+
+// 解析URL列表
+const parseUrls = (text: string): string[] => {
+  return text
+    .split('\n')
+    .map(url => url.trim())
+    .filter(url => url.length > 0);
+};
+
+// 更新URL计数
+const updateUrlCount = () => {
+  urlCount.value = parseUrls(scanConfig.value.target_urls_text).length;
+};
+
+// 监听文本变化，更新URL计数
+watch(() => scanConfig.value.target_urls_text, () => {
+  updateUrlCount();
+});
+
 const tasks = ref<ScanTask[]>([]);
 const report = ref<ScanReport | null>(null);
 const loading = ref(false);
@@ -458,6 +583,30 @@ const creating = ref(false);
 const reportVisible = ref(false);
 const previewVisible = ref(false);
 const currentTaskId = ref('');
+
+// 批量导出相关
+const selectedTaskIds = ref<string[]>([]);
+const batchExportVisible = ref(false);
+const batchExportConfig = ref({
+  format: 'excel' as 'json' | 'html' | 'markdown' | 'excel',
+  filters: [] as string[]
+});
+
+// 表格行选择配置
+const rowSelection = ref({
+  type: 'checkbox' as const,
+  showCheckedAll: true
+});
+
+// 监听选择变化，用于调试
+watch(() => selectedTaskIds.value, (newVal, oldVal) => {
+  console.log('=== selectedTaskIds 发生变化 ===');
+  console.log('旧值:', oldVal);
+  console.log('新值:', newVal);
+  console.log('选择数量:', newVal.length, '个任务');
+  console.log('任务列表总数:', tasks.value.length, '个任务');
+  console.log('============================');
+}, { deep: true });
 
 // 可编辑的错误列表
 interface EditableError {
@@ -486,28 +635,54 @@ const loadTasks = async () => {
 
 // 创建任务
 const handleCreateTask = async () => {
-  if (!scanConfig.value.target_url) {
-    Message.warning('请输入目标网站URL');
+  // 解析URL列表
+  const urls = parseUrls(scanConfig.value.target_urls_text);
+  
+  if (urls.length === 0) {
+    Message.warning('请输入至少一个目标网站URL');
     return;
   }
 
   creating.value = true;
   try {
     // 调试日志：显示发送的配置
-    console.log('[WebScan] Creating task with config:', {
+    console.log('[WebScan] Creating tasks with config:', {
+      urls: urls,
       enable_cascade: scanConfig.value.enable_cascade,
       enable_ai: scanConfig.value.enable_ai,
       enable_sensitive: scanConfig.value.enable_sensitive
     });
     
-    const task = await createScanTask(scanConfig.value);
-    Message.success('任务创建成功');
+    // 准备请求配置
+    const requestConfig = {
+      ...scanConfig.value,
+      target_urls: urls,  // 使用批量URL
+      target_url: undefined,  // 清空单个URL
+    };
+    
+    const tasks = await createScanTask(requestConfig);
+    const taskCount = Array.isArray(tasks) ? tasks.length : 1;
+    Message.success(`成功创建 ${taskCount} 个扫描任务`);
     await loadTasks();
-    // 自动启动任务
-    await startScanTask(task.id);
-    Message.info('任务已启动');
-    // 开始轮询进度
-    pollProgress(task.id);
+    
+    // 自动启动所有任务
+    if (Array.isArray(tasks)) {
+      for (const task of tasks) {
+        try {
+          await startScanTask(task.id);
+          // 开始轮询进度
+          pollProgress(task.id);
+        } catch (error) {
+          console.error(`Failed to start task ${task.id}:`, error);
+        }
+      }
+      Message.info(`已启动 ${taskCount} 个任务`);
+    } else {
+      // 向后兼容：单个任务
+      await startScanTask(tasks.id);
+      Message.info('任务已启动');
+      pollProgress(tasks.id);
+    }
   } catch (error) {
     Message.error('创建任务失败');
   } finally {
@@ -654,6 +829,107 @@ const handleDeleteTask = async (taskId: string) => {
     await loadTasks();
   } catch (error) {
     Message.error('删除任务失败');
+  }
+};
+
+// 显示批量导出对话框
+const showBatchExportModal = () => {
+  console.log('=== 点击批量导出按钮 ===');
+  console.log('已选择任务数:', selectedTaskIds.value.length);
+  console.log('已选择的任务ID:', selectedTaskIds.value);
+  console.log('任务列表:', tasks.value);
+  console.log('=====================');
+  
+  if (selectedTaskIds.value.length === 0) {
+    Message.warning('请先选择要导出的任务');
+    return;
+  }
+  batchExportVisible.value = true;
+};
+
+// 移除单个选中的任务
+const removeSelectedTask = (taskId: string) => {
+  const index = selectedTaskIds.value.indexOf(taskId);
+  if (index > -1) {
+    selectedTaskIds.value.splice(index, 1);
+  }
+};
+
+// 处理表格行选择
+const handleSelect = (rowKeys: string[], rowKey: string, record: any) => {
+  console.log('=== 单行选择事件 ===');
+  console.log('所有选中的keys:', rowKeys);
+  console.log('当前操作的rowKey:', rowKey);
+  console.log('当前操作的record:', record);
+  selectedTaskIds.value = [...rowKeys];
+  console.log('==================');
+};
+
+// 处理全选事件
+const handleSelectAll = (checked: boolean) => {
+  console.log('=== 全选事件 ===');
+  console.log('全选状态:', checked);
+  if (checked) {
+    selectedTaskIds.value = tasks.value.map(task => task.id);
+  } else {
+    selectedTaskIds.value = [];
+  }
+  console.log('选中的任务数:', selectedTaskIds.value.length);
+  console.log('===============');
+};
+
+// 反选任务
+const handleInvertSelection = () => {
+  console.log('=== 执行反选操作 ===');
+  console.log('当前选中的任务ID:', selectedTaskIds.value);
+  console.log('当前选中数量:', selectedTaskIds.value.length);
+  
+  const allTaskIds = tasks.value.map(task => task.id);
+  console.log('所有任务ID:', allTaskIds);
+  console.log('任务总数:', allTaskIds.length);
+  
+  const invertedIds = allTaskIds.filter(id => !selectedTaskIds.value.includes(id));
+  console.log('反选后的任务ID:', invertedIds);
+  console.log('反选后数量:', invertedIds.length);
+  
+  selectedTaskIds.value = invertedIds;
+  console.log('==================');
+};
+
+// 批量导出报告
+const handleBatchExport = async () => {
+  console.log('开始批量导出，任务ID:', selectedTaskIds.value);
+  console.log('导出格式:', batchExportConfig.value.format);
+  console.log('过滤条件:', batchExportConfig.value.filters);
+  
+  try {
+    Message.loading({ content: '正在生成报告...', id: 'batchExport', duration: 0 });
+    
+    const blob = await batchExportReports(
+      selectedTaskIds.value,
+      batchExportConfig.value.format,
+      batchExportConfig.value.filters
+    );
+    
+    console.log('报告生成成功，文件大小:', blob.size, 'bytes');
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.download = `webscan_reports_${timestamp}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    Message.success({ content: '批量导出成功', id: 'batchExport' });
+    batchExportVisible.value = false;
+    selectedTaskIds.value = [];
+  } catch (error) {
+    console.error('批量导出失败:', error);
+    Message.error({ content: `批量导出失败: ${error}`, id: 'batchExport' });
   }
 };
 

@@ -120,6 +120,15 @@ async function fetchEncryptionKeyFromBackend(): Promise<void> {
     try {
       console.log('从后端获取加密密钥...');
       const response = await fetch('/api/v1/system/encryption-key');
+      
+      // 检查响应状态
+      if (!response.ok) {
+        console.warn(`获取加密密钥失败: HTTP ${response.status}`);
+        cachedEncryptionKey = null;
+        return;
+      }
+      
+      // 尝试解析JSON
       const result = await response.json();
 
       if (result.success && result.data?.enabled && result.data?.key) {
@@ -130,7 +139,7 @@ async function fetchEncryptionKeyFromBackend(): Promise<void> {
         cachedEncryptionKey = null;
       }
     } catch (error) {
-      console.error('获取加密密钥失败:', error);
+      console.warn('获取加密密钥失败，将使用未加密模式:', error);
       cachedEncryptionKey = null;
     } finally {
       encryptionKeyFetchPromise = null;
